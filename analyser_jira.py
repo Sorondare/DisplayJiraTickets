@@ -2,43 +2,72 @@ import argparse
 import configparser
 import io
 import sys
+from enum import StrEnum, auto
 
 import pandas as pd
 from jira import JIRA
 
+
+class Action(StrEnum):
+    IMPLEMENTATION = 'implémentation'
+    FIX = 'fix'
+    REVIEW = 'review'
+    TEST = 'test'
+    EMPTY = ''
+
+
+class Column(StrEnum):
+    ISSUE_KEY = auto()
+    ISSUE_TYPE = auto()
+    SUMMARY = auto()
+    STATUS = auto()
+    ASSIGNEE = auto()
+
+
+class Status(StrEnum):
+    TO_DO = auto()
+    IN_PROGRESS = auto()
+    TO_REVIEW = auto()
+    IN_REVIEW = auto()
+    TO_DEPLOY = auto()
+    TO_TEST = auto()
+    IN_TEST = auto()
+    DONE = auto()
+
+
 # Define status mappings as constants
 STATUS_MAPPING_FR = {
-    "À faire": "TO DO",
-    "En cours": "IN PROGRESS",
-    "TO REVIEW": "TO REVIEW",
-    "Revue en cours": "IN REVIEW",
-    "TO DEPLOY": "TO DEPLOY",
-    "TO TEST": "TO TEST",
-    "IN TEST": "IN TEST",
-    "Terminé(e)": "DONE",
+    "À faire": Status.TO_DO,
+    "En cours": Status.IN_PROGRESS,
+    "TO REVIEW": Status.TO_REVIEW,
+    "Revue en cours": Status.IN_REVIEW,
+    "TO DEPLOY": Status.TO_DEPLOY,
+    "TO TEST": Status.TO_TEST,
+    "IN TEST": Status.IN_TEST,
+    "Terminé(e)": Status.DONE,
 }
 
 STATUS_MAPPING_EN = {
-    "TO DO": "TO DO",
-    "IN PROGRESS": "IN PROGRESS",
-    "TO REVIEW": "TO REVIEW",
-    "IN REVIEW": "IN REVIEW",
-    "TO DEPLOY": "TO DEPLOY",
-    "TO TEST": "TO TEST",
-    "IN TEST": "IN TEST",
-    "DONE": "DONE",
+    "TO DO": Status.TO_DO,
+    "IN PROGRESS": Status.IN_PROGRESS,
+    "TO REVIEW": Status.TO_REVIEW,
+    "IN REVIEW": Status.IN_REVIEW,
+    "TO DEPLOY": Status.TO_DEPLOY,
+    "TO TEST": Status.TO_TEST,
+    "IN TEST": Status.IN_TEST,
+    "DONE": Status.DONE,
 }
 
 # Define action mappings as a constant
 ACTION_MAPPING = {
-    "TO DO": "",
-    "IN PROGRESS": "Implémentation",
-    "TO REVIEW": "Implémentation",
-    "IN REVIEW": "Review",
-    "TO DEPLOY": "Review",
-    "TO TEST": "Review",
-    "IN TEST": "Test",
-    "DONE": "Test",
+    Status.TO_DO: Action.EMPTY,
+    Status.IN_PROGRESS: Action.IMPLEMENTATION,
+    Status.TO_REVIEW: Action.IMPLEMENTATION,
+    Status.IN_REVIEW: Action.REVIEW,
+    Status.TO_DEPLOY: Action.REVIEW,
+    Status.TO_TEST: Action.REVIEW,
+    Status.IN_TEST: Action.TEST,
+    Status.DONE: Action.TEST,
 }
 
 
@@ -47,7 +76,7 @@ def categorize_status(status, language):
     Categorizes a Jira ticket status based on the "IN" statuses.
 
     Args:
-        status (str): The Jira ticket status.
+        status (Status): The Jira ticket status.
         language (str): The language for status mapping ('fr' or 'en').
 
     Returns:
@@ -100,10 +129,11 @@ def get_jira_data(jira_config):
         data = []
         for issue in issues:
             data.append({
-                'Issue key': issue.key,
-                'Summary': issue.fields.summary,
-                'Status': issue.fields.status.name,
-                'Assignee': issue.fields.assignee.displayName if issue.fields.assignee else None,
+                Column.ISSUE_KEY: issue.key,
+                Column.ISSUE_TYPE: issue.fields.issuetype.name,
+                Column.SUMMARY: issue.fields.summary,
+                Column.STATUS: issue.fields.status.name,
+                Column.ASSIGNEE: issue.fields.assignee.displayName if issue.fields.assignee else None,
             })
 
         # Create a DataFrame from the issues data
@@ -144,18 +174,11 @@ def process_jira_data(csv_data, display_tickets, language, username):
         print("Error: Invalid language specified.  Please use 'en' or 'fr'.")
         sys.exit(1)
 
-
-    # Use the column names corresponding to the selected language.
-    status_column = "Status"
-    issue_key_column = "Issue key"
-    summary_column = "Summary"
-    assignee_column = "Assignee"
-
     # Map status values to their translated equivalents
-    df[status_column] = df[status_column].map(status_mapping)
+    df[Column.STATUS] = df[Column.STATUS].map(status_mapping)
 
     # Apply the function to create a new column
-    df["Action"] = df[status_column].apply(lambda x: categorize_status(x, language))
+    df["Action"] = df[Column.STATUS].apply(lambda x: categorize_status(x, language))
 
     # Group by status category and count the tickets
     report = df.groupby("Action").size()
@@ -168,20 +191,23 @@ def process_jira_data(csv_data, display_tickets, language, username):
     if display_tickets:
         print("\nTickets by status:")
         # Check if the necessary columns exist before displaying them
-        if issue_key_column in df.columns and summary_column in df.columns and assignee_column in df.columns:
+        if Column.ISSUE_KEY in df.columns and Column.SUMMARY in df.columns and Column.ASSIGNEE in df.columns:
             tickets_by_in_status = df[df['Action'] != "Other statuses"]
             if not tickets_by_in_status.empty:  # Verify that the dataframe is not empty before displaying it
                 for index, row in tickets_by_in_status.iterrows():
                     action = row['Action']
+                    if row[Column.ISSUE_TYPE] == "Bug" and action == Action.IMPLEMENTATION:
+                        action = Action.FIX
                     # Add "(en cours)" only if the assignee is the user
-                    if row[assignee_column] == username and row[status_column] in ("IN PROGRESS", "IN REVIEW", "IN TEST"):
+                    if row[Column.ASSIGNEE] == username and row[Column.STATUS] in (
+                    "IN PROGRESS", "IN REVIEW", "IN TEST"):
                         action += " (en cours)"
-                    print(f"- {row[issue_key_column]} {row[summary_column]} : {action}")
+                    print(f"- {row[Column.ISSUE_KEY]} {row[Column.SUMMARY]} : {action}")
             else:
                 print("No tickets with IN statuses.")
         else:
             print(
-                f"Error: The '{issue_key_column}', '{summary_column}', or '{assignee_column}' columns are missing from the CSV file. Unable to display ticket details.")
+                f"Error: The '{Column.ISSUE_KEY}', '{Column.SUMMARY}', or '{Column.ASSIGNEE}' columns are missing from the CSV file. Unable to display ticket details.")
 
 
 def main():
