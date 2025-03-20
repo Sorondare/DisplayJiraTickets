@@ -1,17 +1,20 @@
-import pandas as pd
 import argparse
+import configparser
+import io
 import sys
-import os
+
+import pandas as pd
+from jira import JIRA
 
 # Define status mappings as constants
 STATUS_MAPPING_FR = {
-    "À Faire": "TO DO",
+    "À faire": "TO DO",
     "En cours": "IN PROGRESS",
     "TO REVIEW": "TO REVIEW",
     "Revue en cours": "IN REVIEW",
     "TO DEPLOY": "TO DEPLOY",
-    "IN TEST": "IN TEST",
     "TO TEST": "TO TEST",
+    "IN TEST": "IN TEST",
     "Terminé(e)": "DONE",
 }
 
@@ -26,6 +29,7 @@ STATUS_MAPPING_EN = {
     "DONE": "DONE",
 }
 
+# Define action mappings as a constant
 ACTION_MAPPING = {
     "TO DO": "",
     "IN PROGRESS": "Implémentation",
@@ -37,9 +41,6 @@ ACTION_MAPPING = {
     "DONE": "Test",
 }
 
-# Define column names as constants
-COLUMN_NAMES_FR = {"Issue key": "Clé de ticket", "Summary": "Résumé", "Status": "État", "Assignee": "Personne assignée"}
-COLUMN_NAMES_EN = {"Issue key": "Issue Key", "Summary": "Summary", "Status": "Status", "Assignee": "Assignee"}
 
 def categorize_status(status, language):
     """
@@ -59,51 +60,96 @@ def categorize_status(status, language):
     except KeyError:
         raise ValueError(f"Unknown status: {status} for language: {language}")
 
-def process_jira_file(filepath, display_tickets, language):
+
+def get_jira_data(jira_config):
     """
-    Processes a Jira exported CSV file to group tickets by statuses and display a report.
+    Retrieves Jira data as a CSV string using a filter name or ID.
 
     Args:
-        filepath (str): The path to the Jira exported CSV file.
-        display_tickets (bool): Indicates whether to display individual tickets.
-        language (str): The language of the Jira column names ('fr' or 'en').
+        jira_config (configparser.ConfigParser): The configuration object containing Jira settings.
+
+    Returns:
+        str: The CSV data as a string, or None on error.
     """
     try:
-        # Load the CSV file
-        df = pd.read_csv(filepath)
-    except FileNotFoundError:
-        print(f"Error: The specified file ({filepath}) was not found.")
-        sys.exit(1)
+        # Jira connection details from configuration
+        jira_server = jira_config.get('Jira', 'server')
+        jira_username = jira_config.get('Jira', 'username')
+        jira_api_token = jira_config.get('Jira', 'api_token')
+        jira_filter_id = jira_config.get('Jira', 'filter_id')
+
+        jira_options = {
+            'server': jira_server,
+        }
+        jira = JIRA(options=jira_options, basic_auth=(jira_username, jira_api_token))
+
+        # Get the filter
+        try:
+            filter_obj = jira.filter(jira_filter_id)
+        except Exception:
+            print(f"Error: Filter '{jira_filter_id}' not found.")
+            return None
+
+        # Construct the JQL query from the filter
+        jql_query = filter_obj.jql
+
+        # Search for issues using the JQL query
+        issues = jira.search_issues(jql_query, maxResults=1000)
+
+        # Prepare data for DataFrame.  Include Assignee.
+        data = []
+        for issue in issues:
+            data.append({
+                'Issue key': issue.key,
+                'Summary': issue.fields.summary,
+                'Status': issue.fields.status.name,
+                'Assignee': issue.fields.assignee.displayName if issue.fields.assignee else None,
+            })
+
+        # Create a DataFrame from the issues data
+        df = pd.DataFrame(data)
+
+        # Convert DataFrame to CSV string
+        csv_data = df.to_csv(index=False, encoding='utf-8')
+        return csv_data
+
     except Exception as e:
-        print(f"Error reading the CSV file: {e}")
+        print(f"Error retrieving data from Jira: {e}")
+        return None
+
+
+def process_jira_data(csv_data, display_tickets, language, username):
+    """
+    Processes Jira data from a CSV string, groups tickets by statuses, and displays a report.
+
+    Args:
+        csv_data (str): The CSV data as a string.
+        display_tickets (bool): Indicates whether to display individual tickets.
+        language (str): The language of the Jira column names ('fr' or 'en').
+        username (str): The username to check for assignee.
+    """
+    try:
+        # Load the CSV data from the string
+        df = pd.read_csv(io.StringIO(csv_data))
+    except Exception as e:
+        print(f"Error reading CSV data: {e}")
         sys.exit(1)
 
     # Define column names and status mappings based on the selected language
     if language == "fr":
-        column_names = COLUMN_NAMES_FR
         status_mapping = STATUS_MAPPING_FR
     elif language == "en":
-        column_names = COLUMN_NAMES_EN
         status_mapping = STATUS_MAPPING_EN
     else:
         print("Error: Invalid language specified.  Please use 'en' or 'fr'.")
         sys.exit(1)
 
-    # Check if the expected columns exist
-    if not all(col in df.columns for col in column_names.values()):
-        print(f"Error: The CSV file does not contain the expected columns for the selected language ('{language}').")
-        print(f"  Expected columns: {list(column_names.values())}")
-        print(f"  Actual columns: {list(df.columns)}")
-        sys.exit(1)
-
-    # Rename the columns
-    df = df.rename(columns=column_names)
 
     # Use the column names corresponding to the selected language.
-    status_column = column_names["Status"]
-    issue_key_column = column_names["Issue key"]
-    summary_column = column_names["Summary"]
-    assignee_column = column_names["Assignee"]
+    status_column = "Status"
+    issue_key_column = "Issue key"
+    summary_column = "Summary"
+    assignee_column = "Assignee"
 
     # Map status values to their translated equivalents
     df[status_column] = df[status_column].map(status_mapping)
@@ -127,35 +173,51 @@ def process_jira_file(filepath, display_tickets, language):
             if not tickets_by_in_status.empty:  # Verify that the dataframe is not empty before displaying it
                 for index, row in tickets_by_in_status.iterrows():
                     action = row['Action']
-                    # Add "(en cours)" only if the assignee is "Prénom Nom"
-                    if row[assignee_column] == USERNAME and row[status_column] != "DONE":
+                    # Add "(en cours)" only if the assignee is the user
+                    if row[assignee_column] == username and row[status_column] in ("IN PROGRESS", "IN REVIEW", "IN TEST"):
                         action += " (en cours)"
                     print(f"- {row[issue_key_column]} {row[summary_column]} : {action}")
             else:
                 print("No tickets with IN statuses.")
         else:
-            print(f"Error: The '{issue_key_column}', '{summary_column}', or '{assignee_column}' columns are missing from the CSV file. Unable to display ticket details.")
+            print(
+                f"Error: The '{issue_key_column}', '{summary_column}', or '{assignee_column}' columns are missing from the CSV file. Unable to display ticket details.")
+
 
 def main():
     """
     Main function to analyze Jira data from an exported CSV file.
     """
-    parser = argparse.ArgumentParser(description="Analyzes Jira data from an exported CSV file and generates a report on statuses.")
-    parser.add_argument("csv_file", help="The path to the Jira exported CSV file.")
+    parser = argparse.ArgumentParser(
+        description="Analyzes Jira data from an exported CSV file or Jira filter and generates a report on statuses.")
     parser.add_argument("-t", "--tickets", action="store_true", help="Display the details of individual tickets.")
-    parser.add_argument("-l", "--language", default="fr", choices=["en", "fr"], help="The language of the Jira column names (en or fr). Default is fr.")
+    parser.add_argument("-l", "--language", default="fr", choices=["en", "fr"],
+                        help="The language of the Jira status names (en or fr). Default is fr.")
+    parser.add_argument("-c", "--config", default="config.ini", help="Path to the configuration file.")
 
     args = parser.parse_args()
-    csv_file = args.csv_file
     display_tickets = args.tickets
     language = args.language
+    config_file = args.config
 
-    # Check if the file exists before passing it to the function
-    if not os.path.exists(csv_file):
-        print(f"Error: The specified file ({csv_file}) does not exist.")
+    # Load configuration from file
+    config = configparser.ConfigParser()
+    try:
+        config.read(config_file)
+    except Exception as e:
+        print(f"Error reading configuration file: {e}")
         sys.exit(1)
 
-    process_jira_file(csv_file, display_tickets, language)
+    # Get username from config
+    username = config.get('User', 'name')
+
+    # Fetch data from Jira using the filter
+    csv_data = get_jira_data(config)
+    if csv_data:
+        process_jira_data(csv_data, display_tickets, language, username)
+    else:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
