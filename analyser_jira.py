@@ -59,7 +59,7 @@ def categorize_status(status, language):
     except KeyError:
         raise ValueError(f"Unknown status: {status} for language: {language}")
 
-def process_jira_file(filepath, display_tickets, language):
+def process_jira_file(filepath, display_tickets, language, username):
     """
     Processes a Jira exported CSV file to group tickets by statuses and display a report.
 
@@ -128,7 +128,7 @@ def process_jira_file(filepath, display_tickets, language):
                 for index, row in tickets_by_in_status.iterrows():
                     action = row['Action']
                     # Add "(en cours)" only if the assignee is "Prénom Nom"
-                    if row[assignee_column] == USERNAME and row[status_column] != "DONE":
+                    if row[assignee_column] == username and row[status_column] != "DONE":
                         action += " (en cours)"
                     print(f"- {row[issue_key_column]} {row[summary_column]} : {action}")
             else:
@@ -144,18 +144,20 @@ def main():
     parser.add_argument("csv_file", help="The path to the Jira exported CSV file.")
     parser.add_argument("-t", "--tickets", action="store_true", help="Display the details of individual tickets.")
     parser.add_argument("-l", "--language", default="fr", choices=["en", "fr"], help="The language of the Jira column names (en or fr). Default is fr.")
+    parser.add_argument("-u", "--username", help="The user name assigned to the tickets")
 
     args = parser.parse_args()
     csv_file = args.csv_file
     display_tickets = args.tickets
     language = args.language
+    username = args.username
 
     # Check if the file exists before passing it to the function
     if not os.path.exists(csv_file):
         print(f"Error: The specified file ({csv_file}) does not exist.")
         sys.exit(1)
 
-    process_jira_file(csv_file, display_tickets, language)
+    process_jira_file(csv_file, display_tickets, language, username)
 
 if __name__ == "__main__":
     main()
