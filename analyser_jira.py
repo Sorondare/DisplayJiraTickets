@@ -198,9 +198,9 @@ def process_jira_data(csv_data, display_tickets, language, username):
                     action = row['Action']
                     if row[Column.ISSUE_TYPE] == "Bug" and action == Action.IMPLEMENTATION:
                         action = Action.FIX
+
                     # Add "(en cours)" only if the assignee is the user
-                    if row[Column.ASSIGNEE] == username and row[Column.STATUS] in (
-                    "IN PROGRESS", "IN REVIEW", "IN TEST"):
+                    if row[Column.ASSIGNEE] == username and row[Column.STATUS] in (Status.IN_PROGRESS, Status.IN_REVIEW, Status.IN_TEST):
                         action += " (en cours)"
                     print(f"- {row[Column.ISSUE_KEY]} {row[Column.SUMMARY]} : {action}")
             else:
