@@ -140,6 +140,7 @@ def get_jira_data(jira_config, language):
         logger.debug(f"Searching for issues using JQL query: {JQL_FILTER}")
         logger.info("Retrieving data from Jira...")
         jira_issues = jira.search_issues(JQL_FILTER, maxResults=1000)
+        jira_issues.sort(key=lambda i: i.fields.updated)
 
         # Prepare data for DataFrame.  Include Assignee.
         issues = []
@@ -167,15 +168,17 @@ def get_jira_data(jira_config, language):
         return None
 
 
-def process_jira_data(issues, username):
+def process_jira_data(config, issues):
     logger = logging.getLogger(__name__)
 
     # Display the report
     logger.info("Reporting issues...")
 
-    # Display individual tickets by status if requested
+    username = config.get('Report', 'username')
+    introduction = config.get('Report', 'introduction')
+
+    print(introduction)
     for issue in issues:
-        # Check if the necessary columns exist before displaying them
         if issue.is_valid():
             printed_action = issue.action + (
                 " (en cours)"
@@ -183,7 +186,7 @@ def process_jira_data(issues, username):
                 else ""
             )
 
-            print(f"- {issue.issue_key} {issue.summary} : {printed_action}")
+            print(f"{issue.issue_key} {issue.summary} : {printed_action}")
         else:
             print(
                 f"Error: The '{issue}' is not valid.")
@@ -216,12 +219,10 @@ def main():
     logging_level = config.get('Logging', 'level') if config.has_option('Logging', 'level') else logging.INFO
     logging.basicConfig(level=logging_level, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
-    username = config.get('User', 'name')
-
     # Fetch data from Jira using the filter
     issues = get_jira_data(config, language)
     if issues:
-        process_jira_data(issues, username)
+        process_jira_data(config, issues)
     else:
         sys.exit(1)
 
