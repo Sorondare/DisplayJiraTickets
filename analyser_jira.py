@@ -1,10 +1,9 @@
 import argparse
 import configparser
-import io
 import sys
+import logging
 from enum import StrEnum, auto
 
-import pandas as pd
 from jira import JIRA
 
 
@@ -14,14 +13,6 @@ class Action(StrEnum):
     REVIEW = 'review'
     TEST = 'test'
     EMPTY = ''
-
-
-class Column(StrEnum):
-    ISSUE_KEY = auto()
-    ISSUE_TYPE = auto()
-    SUMMARY = auto()
-    STATUS = auto()
-    ASSIGNEE = auto()
 
 
 class Status(StrEnum):
@@ -70,144 +61,132 @@ ACTION_MAPPING = {
     Status.DONE: Action.TEST,
 }
 
+JQL_FILTER = 'project = "Scrum Beoogo" AND (status CHANGED BY currentUser() AFTER startOfDay() OR assignee = currentUser()) AND sprint in openSprints()'
 
-def categorize_status(status, language):
+LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+
+class Issue:
     """
-    Categorizes a Jira ticket status based on the "IN" statuses.
-
-    Args:
-        status (Status): The Jira ticket status.
-        language (str): The language for status mapping ('fr' or 'en').
-
-    Returns:
-        str: The status category ("implémentation", "review", "test", "" or "Other statuses").
+    Represents a Jira issue.
     """
-    action_mapping = ACTION_MAPPING
+    def __init__(self, issue_key, issue_type, summary, status, assignee, action):
+        self.issue_key = issue_key
+        self.issue_type = issue_type
+        self.summary = summary
+        self.status = status
+        self.assignee = assignee
+        self.action = action
+
+    def __str__(self):
+        return f"[Issue Key: {self.issue_key}, Issue Type: {self.issue_type}, Summary: {self.summary}, Status: {self.status}, Assignee: {self.assignee}]"
+
+    def __repr__(self):
+        return f"JiraIssue(issue_key={self.issue_key}, issue_type={self.issue_type}, summary={self.summary}, status={self.status}, assignee={self.assignee})"
+
+    def __eq__(self, other):
+        if isinstance(other, Issue):
+            return self.issue_key == other.issue_key
+
+    def is_valid(self):
+        return self.issue_key is not None and self.summary is not None and self.status is not None
+
+    def is_bug(self):
+        return self.issue_type == "Bug"
+
+
+def map_status_from_jira_status_name(jira_status_name, language):
+    if language == "fr":
+        status_mapping = STATUS_MAPPING_FR
+    elif language == "en":
+        status_mapping = STATUS_MAPPING_EN
+    else:
+        raise ValueError("Error: Invalid language specified. Please use 'en' or 'fr'.")
 
     try:
-        return action_mapping[status]
+        return status_mapping[jira_status_name]
     except KeyError:
-        raise ValueError(f"Unknown status: {status} for language: {language}")
+        raise ValueError(f"Unknown status: {jira_status_name} for language: {language}")
 
 
-def get_jira_data(jira_config):
-    """
-    Retrieves Jira data as a CSV string using a filter name or ID.
+def map_action_from_status(issue_type, status):
+    try:
+        action = ACTION_MAPPING[status]
 
-    Args:
-        jira_config (configparser.ConfigParser): The configuration object containing Jira settings.
+        if action == Action.IMPLEMENTATION and issue_type == "Bug":
+            return Action.FIX
+        else:
+            return action
+    except KeyError:
+        raise ValueError(f"Unknown status: {status}")
 
-    Returns:
-        str: The CSV data as a string, or None on error.
-    """
+
+def get_jira_data(jira_config, language):
+    logger = logging.getLogger(__name__)
+
     try:
         # Jira connection details from configuration
         jira_server = jira_config.get('Jira', 'server')
         jira_username = jira_config.get('Jira', 'username')
         jira_api_token = jira_config.get('Jira', 'api_token')
-        jira_filter_id = jira_config.get('Jira', 'filter_id')
 
         jira_options = {
             'server': jira_server,
         }
         jira = JIRA(options=jira_options, basic_auth=(jira_username, jira_api_token))
 
-        # Get the filter
-        try:
-            filter_obj = jira.filter(jira_filter_id)
-        except Exception:
-            print(f"Error: Filter '{jira_filter_id}' not found.")
-            return None
-
-        # Construct the JQL query from the filter
-        jql_query = filter_obj.jql
-
         # Search for issues using the JQL query
-        issues = jira.search_issues(jql_query, maxResults=1000)
+        logger.debug(f"Searching for issues using JQL query: {JQL_FILTER}")
+        logger.info("Retrieving data from Jira...")
+        jira_issues = jira.search_issues(JQL_FILTER, maxResults=1000)
 
         # Prepare data for DataFrame.  Include Assignee.
-        data = []
-        for issue in issues:
-            data.append({
-                Column.ISSUE_KEY: issue.key,
-                Column.ISSUE_TYPE: issue.fields.issuetype.name,
-                Column.SUMMARY: issue.fields.summary,
-                Column.STATUS: issue.fields.status.name,
-                Column.ASSIGNEE: issue.fields.assignee.displayName if issue.fields.assignee else None,
-            })
+        issues = []
+        for jira_issue in jira_issues:
+            issue_type = jira_issue.fields.issuetype.name
+            status = map_status_from_jira_status_name(jira_issue.fields.status.name, language)
+            action = map_action_from_status(issue_type, status)
 
-        # Create a DataFrame from the issues data
-        df = pd.DataFrame(data)
+            issue = Issue(
+                issue_key=jira_issue.key,
+                issue_type=issue_type,
+                summary=jira_issue.fields.summary,
+                status=status,
+                assignee=jira_issue.fields.assignee.displayName if jira_issue.fields.assignee else None,
+                action=action,
+            )
+            logger.debug(f"Issue extracted: {issue}")
 
-        # Convert DataFrame to CSV string
-        csv_data = df.to_csv(index=False, encoding='utf-8')
-        return csv_data
+            issues.append(issue)
+
+        return issues
 
     except Exception as e:
-        print(f"Error retrieving data from Jira: {e}")
+        logger.error(f"Error retrieving data from Jira: {e}")
         return None
 
 
-def process_jira_data(csv_data, display_tickets, language, username):
-    """
-    Processes Jira data from a CSV string, groups tickets by statuses, and displays a report.
-
-    Args:
-        csv_data (str): The CSV data as a string.
-        display_tickets (bool): Indicates whether to display individual tickets.
-        language (str): The language of the Jira column names ('fr' or 'en').
-        username (str): The username to check for assignee.
-    """
-    try:
-        # Load the CSV data from the string
-        df = pd.read_csv(io.StringIO(csv_data))
-    except Exception as e:
-        print(f"Error reading CSV data: {e}")
-        sys.exit(1)
-
-    # Define column names and status mappings based on the selected language
-    if language == "fr":
-        status_mapping = STATUS_MAPPING_FR
-    elif language == "en":
-        status_mapping = STATUS_MAPPING_EN
-    else:
-        print("Error: Invalid language specified.  Please use 'en' or 'fr'.")
-        sys.exit(1)
-
-    # Map status values to their translated equivalents
-    df[Column.STATUS] = df[Column.STATUS].map(status_mapping)
-
-    # Apply the function to create a new column
-    df["Action"] = df[Column.STATUS].apply(lambda x: categorize_status(x, language))
-
-    # Group by status category and count the tickets
-    report = df.groupby("Action").size()
+def process_jira_data(issues, username):
+    logger = logging.getLogger(__name__)
 
     # Display the report
-    print("\nReport on statuses:")
-    print(report)
+    logger.info("Reporting issues...")
 
     # Display individual tickets by status if requested
-    if display_tickets:
-        print("\nTickets by status:")
+    for issue in issues:
         # Check if the necessary columns exist before displaying them
-        if Column.ISSUE_KEY in df.columns and Column.SUMMARY in df.columns and Column.ASSIGNEE in df.columns:
-            tickets_by_in_status = df[df['Action'] != "Other statuses"]
-            if not tickets_by_in_status.empty:  # Verify that the dataframe is not empty before displaying it
-                for index, row in tickets_by_in_status.iterrows():
-                    action = row['Action']
-                    if row[Column.ISSUE_TYPE] == "Bug" and action == Action.IMPLEMENTATION:
-                        action = Action.FIX
+        if issue.is_valid():
+            printed_action = issue.action + (
+                " (en cours)"
+                if username == issue.assignee and issue.status in (Status.IN_PROGRESS, Status.IN_REVIEW, Status.IN_TEST)
+                else ""
+            )
 
-                    # Add "(en cours)" only if the assignee is the user
-                    if row[Column.ASSIGNEE] == username and row[Column.STATUS] in (Status.IN_PROGRESS, Status.IN_REVIEW, Status.IN_TEST):
-                        action += " (en cours)"
-                    print(f"- {row[Column.ISSUE_KEY]} {row[Column.SUMMARY]} : {action}")
-            else:
-                print("No tickets with IN statuses.")
+            print(f"- {issue.issue_key} {issue.summary} : {printed_action}")
         else:
             print(
-                f"Error: The '{Column.ISSUE_KEY}', '{Column.SUMMARY}', or '{Column.ASSIGNEE}' columns are missing from the CSV file. Unable to display ticket details.")
+                f"Error: The '{issue}' is not valid.")
 
 
 def main():
@@ -226,7 +205,7 @@ def main():
     language = args.language
     config_file = args.config
 
-    # Load configuration from file
+    # Load configuration from a file
     config = configparser.ConfigParser()
     try:
         config.read(config_file)
@@ -234,13 +213,15 @@ def main():
         print(f"Error reading configuration file: {e}")
         sys.exit(1)
 
-    # Get username from config
+    logging_level = config.get('Logging', 'level') if config.has_option('Logging', 'level') else logging.INFO
+    logging.basicConfig(level=logging_level, format=LOG_FORMAT, datefmt=DATE_FORMAT)
+
     username = config.get('User', 'name')
 
     # Fetch data from Jira using the filter
-    csv_data = get_jira_data(config)
-    if csv_data:
-        process_jira_data(csv_data, display_tickets, language, username)
+    issues = get_jira_data(config, language)
+    if issues:
+        process_jira_data(issues, username)
     else:
         sys.exit(1)
 
