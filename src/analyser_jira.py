@@ -136,7 +136,7 @@ def get_jira_data(jira_config, language):
         jira = JIRA(options=jira_options, basic_auth=(jira_username, jira_api_token))
 
         # Search for issues using the JQL query
-        logger.debug(f"Searching for issues using JQL query: {JQL_FILTER}")
+        logger.debug(f"Searching for issues of {jira_username} using JQL query: {JQL_FILTER}")
         logger.info("Retrieving data from Jira...")
         jira_issues = jira.search_issues(JQL_FILTER, maxResults=1000)
         jira_issues.sort(key=lambda i: i.fields.updated)
@@ -216,7 +216,6 @@ def main():
     logging_level = config.get('Logging', 'level') if config.has_option('Logging', 'level') else logging.INFO
     logging.basicConfig(level=logging_level, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
-    # Fetch data from Jira using the filter
     issues = get_jira_data(config, language)
     if issues:
         process_jira_data(config, issues)
