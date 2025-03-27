@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DisplayJiraTickets"
+version = "0.1.0"
+authors = [
+    { name="Sorondare" },
+]
+description = "Display the daily jira tickets on a copy/paste pretty format."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file="LICENSE" }
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License", # Adjust to your chosen license
+    "Operating System :: OS Independent",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "jira",
+]
+
+# --- Project URLs (Optional but good practice) ---
+[project.urls]
+Repository = "https://github.com/Sorondare/DisplayJiraTickets"
+
+[project.scripts]
+display-daily-tickets = "src.analyser_jira:main"
