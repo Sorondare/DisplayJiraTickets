@@ -49,7 +49,6 @@ STATUS_MAPPING_EN = {
     "DONE": Status.DONE,
 }
 
-# Define action mappings as a constant
 ACTION_MAPPING = {
     Status.TO_DO: Action.EMPTY,
     Status.IN_PROGRESS: Action.IMPLEMENTATION,
@@ -198,13 +197,11 @@ def main():
     """
     parser = argparse.ArgumentParser(
         description="Analyzes Jira data from an exported CSV file or Jira filter and generates a report on statuses.")
-    parser.add_argument("-t", "--tickets", action="store_true", help="Display the details of individual tickets.")
     parser.add_argument("-l", "--language", default="fr", choices=["en", "fr"],
                         help="The language of the Jira status names (en or fr). Default is fr.")
     parser.add_argument("-c", "--config", default="config.ini", help="Path to the configuration file.")
 
     args = parser.parse_args()
-    display_tickets = args.tickets
     language = args.language
     config_file = args.config
 
