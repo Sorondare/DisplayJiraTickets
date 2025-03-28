@@ -40,13 +40,14 @@ Voici un exemple de structure correcte d'un fichier `.ini` :
 
 ```ini
 [Jira]
-server = <hosturl>
+server = <host url>
 username = <username>
-api_token = <api_token>
+api_token = <api token>
+language = <jira displayed language (default: en)>
 
 [Report]
-username = <jira_username_used_in_issues>
-introduction = <introduction to the ticket list>
+username = <jira username used in issues>
+introduction = <introduction to the ticket list output>
 
 [Logging]
 level = <logging level>

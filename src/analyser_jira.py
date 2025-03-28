@@ -121,7 +121,7 @@ def map_action_from_status(issue_type, status):
         raise ValueError(f"Unknown status: {status}")
 
 
-def get_jira_data(jira_config, language):
+def get_jira_data(jira_config):
     logger = logging.getLogger(__name__)
 
     try:
@@ -129,6 +129,12 @@ def get_jira_data(jira_config, language):
         jira_server = jira_config.get('Jira', 'server')
         jira_username = jira_config.get('Jira', 'username')
         jira_api_token = jira_config.get('Jira', 'api_token')
+        language = jira_config.get('Jira', 'language', fallback="en")
+
+        if jira_server is None:
+            raise ValueError("Error: Jira server not found in configuration.")
+        if jira_username is None or jira_api_token is None:
+            raise ValueError("Error: Jira username and/or API token not found in configuration.")
 
         jira_options = {
             'server': jira_server,
@@ -197,12 +203,9 @@ def main():
     """
     parser = argparse.ArgumentParser(
         description="Analyzes Jira data from an exported CSV file or Jira filter and generates a report on statuses.")
-    parser.add_argument("-l", "--language", default="fr", choices=["en", "fr"],
-                        help="The language of the Jira status names (en or fr). Default is fr.")
     parser.add_argument("-c", "--config", default="config.ini", help="Path to the configuration file.")
 
     args = parser.parse_args()
-    language = args.language
     config_file = args.config
 
     # Load configuration from a file
@@ -216,7 +219,7 @@ def main():
     logging_level = config.get('Logging', 'level') if config.has_option('Logging', 'level') else logging.INFO
     logging.basicConfig(level=logging_level, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
-    issues = get_jira_data(config, language)
+    issues = get_jira_data(config)
     if issues:
         process_jira_data(config, issues)
     else:
