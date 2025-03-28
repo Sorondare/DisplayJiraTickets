@@ -5,7 +5,7 @@ Ce script Python utilise un fichier de configuration au format `.ini` afin d'acc
 
 ### 1. Préparation de votre environnement
 
-1. Assurez-vous que Python (version 3.8 ou supérieure) est installé sur votre machine. Vous pouvez le télécharger à partir de [python.org](https://www.python.org/).
+1. Assurez-vous que Python (version 3.11 ou supérieure) est installé sur votre machine. Vous pouvez le télécharger à partir de [python.org](https://www.python.org/).
 2. Créez et activez un environnement virtuel pour isoler vos dépendances Python :
    ```bash
    python -m venv .venv
