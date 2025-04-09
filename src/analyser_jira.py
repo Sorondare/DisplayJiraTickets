@@ -39,14 +39,14 @@ STATUS_MAPPING_FR = {
 }
 
 STATUS_MAPPING_EN = {
-    "TO DO": Status.TO_DO,
-    "IN PROGRESS": Status.IN_PROGRESS,
+    "To Do": Status.TO_DO,
+    "In Progress": Status.IN_PROGRESS,
     "TO REVIEW": Status.TO_REVIEW,
-    "IN REVIEW": Status.IN_REVIEW,
+    "In Review": Status.IN_REVIEW,
     "TO DEPLOY": Status.TO_DEPLOY,
     "TO TEST": Status.TO_TEST,
     "IN TEST": Status.IN_TEST,
-    "DONE": Status.DONE,
+    "Done": Status.DONE,
 }
 
 ACTION_MAPPING = {
