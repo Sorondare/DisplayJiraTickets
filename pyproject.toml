@@ -31,4 +31,4 @@ dependencies = [
 Repository = "https://github.com/Sorondare/DisplayJiraTickets"
 
 [project.scripts]
-display-daily-tickets = "analyser_jira:main"
+display-daily-tickets = "display_jira_tickets.__main__:main"
