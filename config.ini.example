@@ -1,0 +1,13 @@
+[Jira]
+server = <host url>
+username = <username>
+api_token = <api token>
+language = <jira displayed language (default: en)>
+jql_filter = project = "MyProject" AND assignee = currentUser() AND sprint in openSprints()
+
+[Report]
+username = <jira username used in issues>
+introduction = <introduction to the ticket list output>
+
+[Logging]
+level = INFO

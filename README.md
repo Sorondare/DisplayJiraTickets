@@ -20,21 +20,21 @@ Ce script Python utilise un fichier de configuration au format `.ini` afin d'acc
    git clone https://github.com/Sorondare/DisplayJiraTickets
    cd DisplayJiraTickets
    ```
-2. Installez les dépendances via `pip` (elles sont définies dans le fichier `pyproject.toml`) :
+2. Installez les dépendances via `pip` :
    ```bash
    pip install .
    ```
 
 ### 3. Création et configuration du fichier `.ini`
 
-1. Créez un fichier `config.ini` à la racine du projet (ou dans un emplacement approprié) avec la structure décrite ci-dessus.
-2. Remplissez-le avec vos informations.
-3. Assurez-vous que le chemin vers ce fichier `.ini` est fourni correctement au script (si nécessaire, vous pouvez utiliser un argument ou une configuration prédéfinie dans le script).
+1.  Créez un fichier `config.ini` à la racine du projet. Vous pouvez vous baser sur le fichier `config.ini.example` fourni.
+2.  Remplissez-le avec vos informations.
 
 Le fichier `.ini` doit contenir une section `[Jira]` avec les clés suivantes :
 - **`server`** : l'URL du serveur Jira auquel se connecter.
 - **`username`** : le nom d'utilisateur de l'instance Jira.
 - **`api_token`** : le jeton de l'API Jira associé au compte utilisateur indiqué.
+- **`jql_filter`** : la requête JQL pour filtrer les tickets.
 
 Voici un exemple de structure correcte d'un fichier `.ini` :
 
@@ -44,13 +44,14 @@ server = <host url>
 username = <username>
 api_token = <api token>
 language = <jira displayed language (default: en)>
+jql_filter = project = "MyProject" AND assignee = currentUser() AND sprint in openSprints()
 
 [Report]
 username = <jira username used in issues>
 introduction = <introduction to the ticket list output>
 
 [Logging]
-level = <logging level>
+level = INFO
 ```
 
 ### 4. Lancer le script
@@ -59,9 +60,9 @@ level = <logging level>
    ```bash
    display-daily-tickets
    ```
-   **Optionnel** : Si la commande n'est pas accessible globalement, exécutez le script directement via son point d'entrée :
+   **Optionnel** : Si vous n'avez pas installé le package et que vous souhaitez l'exécuter depuis les sources, utilisez la commande suivante depuis la racine du projet :
    ```bash
-   python -m src.analyser_jira
+   python -m src.display_jira_tickets
    ```
 
 ### 5. Résoudre les éventuels problèmes
