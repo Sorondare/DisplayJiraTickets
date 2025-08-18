@@ -39,11 +39,7 @@ class Config:
             username=config.get('Jira', 'username'),
             api_token=config.get('Jira', 'api_token'),
             language=config.get('Jira', 'language', fallback='en'),
-            jql_filter=config.get(
-                'Jira',
-                'jql_filter',
-                fallback='project = "Scrum Beoogo" AND (status CHANGED BY currentUser() AFTER startOfDay() OR assignee = currentUser()) AND sprint in openSprints()'
-            )
+            jql_filter=config.get('Jira', 'jql_filter')
         )
 
     @staticmethod
