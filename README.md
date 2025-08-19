@@ -65,7 +65,13 @@ level = INFO
    python -m src.display_jira_tickets
    ```
 
-### 5. Résoudre les éventuels problèmes
+### 5. Lancer les tests
+Pour lancer la suite de tests unitaires, utilisez la commande suivante à la racine du projet :
+```bash
+python -m unittest discover tests
+```
+
+### 6. Résoudre les éventuels problèmes
 
 - Si vous rencontrez des erreurs liées aux permissions lors de l'accès à l'API Jira, assurez-vous que l'API est activée pour votre compte et que le jeton d'API est valide.
 - Vérifiez que le fichier `config.ini` est correctement renseigné et que son chemin est correct.
