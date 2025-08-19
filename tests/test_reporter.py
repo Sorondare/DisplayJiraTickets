@@ -1,3 +1,4 @@
+import logging
 import unittest
 from unittest.mock import MagicMock, patch
 from io import StringIO
@@ -7,6 +8,7 @@ from src.display_jira_tickets.issue import Issue, Status, Action
 
 class TestReporter(unittest.TestCase):
     def setUp(self):
+        logging.disable(logging.CRITICAL)
         self.report_config = ReportConfig(username="testuser", introduction="Daily Report")
 
     def test_generate_report(self):
