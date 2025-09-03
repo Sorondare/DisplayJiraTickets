@@ -21,7 +21,7 @@ class TestMapStatus(unittest.TestCase):
     def setUp(self):
         self.custom_mapping = {
             "1001": Status.TO_REVIEW,
-            "In Test": Status.IN_TEST,
+            "in test": Status.IN_TEST,
             "1002": Status.DONE,
         }
 
