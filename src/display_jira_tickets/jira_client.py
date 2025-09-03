@@ -1,7 +1,7 @@
 import logging
 from jira import JIRA
 from .config import JiraConfig
-from .issue import Issue, map_status_from_jira_status_name, map_action_from_status
+from .issue import Issue, map_status, map_action_from_status
 
 
 class JiraClient:
@@ -33,7 +33,7 @@ class JiraClient:
             issues = []
             for jira_issue in jira_issues:
                 issue_type = jira_issue.fields.issuetype.name
-                status = map_status_from_jira_status_name(jira_issue.fields.status.name, self.config.language)
+                status = map_status(jira_issue.fields.status, self.config.status_mapping)
                 action = map_action_from_status(issue_type, status)
 
                 issue = Issue(

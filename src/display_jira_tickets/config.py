@@ -3,13 +3,16 @@ import logging
 from dataclasses import dataclass
 
 
+from .issue import Status
+
+
 @dataclass
 class JiraConfig:
     server: str
     username: str
     api_token: str
-    language: str
     jql_filter: str
+    status_mapping: dict[str, Status]
 
 
 @dataclass
@@ -32,15 +35,27 @@ class Config:
         self.report_config = self._get_report_config(config)
         self.logging_config = self._get_logging_config(config)
 
-    @staticmethod
-    def _get_jira_config(config: configparser.ConfigParser) -> JiraConfig:
+    def _get_jira_config(self, config: configparser.ConfigParser) -> JiraConfig:
+        status_mapping = self._get_status_mapping(config)
         return JiraConfig(
             server=config.get('Jira', 'server'),
             username=config.get('Jira', 'username'),
             api_token=config.get('Jira', 'api_token'),
-            language=config.get('Jira', 'language', fallback='en'),
-            jql_filter=config.get('Jira', 'jql_filter')
+            jql_filter=config.get('Jira', 'jql_filter'),
+            status_mapping=status_mapping,
         )
+
+    @staticmethod
+    def _get_status_mapping(config: configparser.ConfigParser) -> dict[str, Status]:
+        status_mapping = {}
+        if config.has_section('StatusMapping'):
+            for key, value in config.items('StatusMapping'):
+                try:
+                    status_mapping[key] = Status[value.upper()]
+                except KeyError:
+                    raise ValueError(f"Invalid status value '{value}' in StatusMapping."
+                                     f"Available statuses are: {[s.name for s in Status]}")
+        return status_mapping
 
     @staticmethod
     def _get_report_config(config: configparser.ConfigParser) -> ReportConfig:

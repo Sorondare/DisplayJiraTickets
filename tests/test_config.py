@@ -1,16 +1,21 @@
 import unittest
 import logging
-import configparser
 from src.display_jira_tickets.config import Config
+from src.display_jira_tickets.issue import Status
 
 class TestConfig(unittest.TestCase):
-    def test_config_loading(self):
+    def _create_config_from_string(self, config_string: str) -> Config:
+        # Helper method to create a Config object from a string by mocking file access.
+        # configparser.read() uses open() internally, so we can mock that.
+        with unittest.mock.patch('builtins.open', unittest.mock.mock_open(read_data=config_string)):
+            return Config('dummy_path')
+
+    def test_config_loading_basic(self):
         config_string = """
 [Jira]
 server = https://jira.example.com
 username = testuser
 api_token = testtoken
-language = fr
 jql_filter = project = 'TEST'
 
 [Report]
@@ -20,22 +25,14 @@ introduction = Test Report
 [Logging]
 level = DEBUG
 """
-        # Create a dummy config file in memory
-        config = configparser.ConfigParser()
-        config.read_string(config_string)
-
-        # We need to mock the open call to avoid file system access
-        with unittest.mock.patch('builtins.open', unittest.mock.mock_open(read_data=config_string)):
-            with unittest.mock.patch('configparser.ConfigParser.read', lambda self, path: self.read_string(config_string)):
-                 config_obj = Config('dummy_path')
-
+        config_obj = self._create_config_from_string(config_string)
 
         # Test Jira config
         self.assertEqual(config_obj.jira_config.server, "https://jira.example.com")
         self.assertEqual(config_obj.jira_config.username, "testuser")
         self.assertEqual(config_obj.jira_config.api_token, "testtoken")
-        self.assertEqual(config_obj.jira_config.language, "fr")
         self.assertEqual(config_obj.jira_config.jql_filter, "project = 'TEST'")
+        self.assertEqual(config_obj.jira_config.status_mapping, {}) # No mapping section
 
         # Test Report config
         self.assertEqual(config_obj.report_config.username, "reportuser")
@@ -43,6 +40,56 @@ level = DEBUG
 
         # Test Logging config
         self.assertEqual(config_obj.logging_config.level, logging.DEBUG)
+
+    def test_status_mapping_loading(self):
+        config_string = """
+[Jira]
+server = a
+username = b
+api_token = c
+jql_filter = d
+
+[Report]
+username = x
+introduction = y
+
+[Logging]
+level = INFO
+
+[StatusMapping]
+Backlog = TO_DO
+In Progress = IN_PROGRESS
+1001 = DONE
+"""
+        config_obj = self._create_config_from_string(config_string)
+        expected_mapping = {
+            "backlog": Status.TO_DO,
+            "in progress": Status.IN_PROGRESS,
+            "1001": Status.DONE
+        }
+        self.assertEqual(config_obj.jira_config.status_mapping, expected_mapping)
+
+    def test_invalid_status_mapping_value(self):
+        config_string = """
+[Jira]
+server = a
+username = b
+api_token = c
+jql_filter = d
+
+[Report]
+username = x
+introduction = y
+
+[Logging]
+level = INFO
+
+[StatusMapping]
+Backlog = INVALID_STATUS
+"""
+        with self.assertRaises(ValueError) as cm:
+            self._create_config_from_string(config_string)
+        self.assertIn("Invalid status value 'INVALID_STATUS'", str(cm.exception))
 
 
 if __name__ == '__main__':
