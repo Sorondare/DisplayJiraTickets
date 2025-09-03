@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto
+from typing import Any
 
 
 class Action(StrEnum):
@@ -19,9 +20,6 @@ class Status(StrEnum):
     TO_TEST = auto()
     IN_TEST = auto()
     DONE = auto()
-
-
-from typing import Any
 
 
 ACTION_MAPPING = {
@@ -56,15 +54,13 @@ class Issue:
 
 
 def map_status(jira_status: Any, custom_mapping: dict[str, Status]) -> Status:
-    # First, try to map by status ID from the custom mapping
     if jira_status.id in custom_mapping:
         return custom_mapping[jira_status.id]
 
-    # If not found, try to map by status name from the custom mapping
-    if jira_status.name in custom_mapping:
-        return custom_mapping[jira_status.name]
+    jira_status_name = jira_status.name.lower() if jira_status.name else None
+    if jira_status_name is not None and jira_status_name in custom_mapping:
+        return custom_mapping[jira_status_name]
 
-    # If still not found, fall back to status category
     status_category = jira_status.statusCategory.key
     if status_category == 'new':
         return Status.TO_DO
