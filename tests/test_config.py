@@ -17,6 +17,7 @@ server = https://jira.example.com
 username = testuser
 api_token = testtoken
 jql_filter = project = 'TEST'
+project = TEST_PROJECT
 
 [Report]
 username = reportuser
@@ -32,6 +33,7 @@ level = DEBUG
         self.assertEqual(config_obj.jira_config.username, "testuser")
         self.assertEqual(config_obj.jira_config.api_token, "testtoken")
         self.assertEqual(config_obj.jira_config.jql_filter, "project = 'TEST'")
+        self.assertEqual(config_obj.jira_config.project, "TEST_PROJECT")
         self.assertEqual(config_obj.jira_config.status_mapping, {}) # No mapping section
 
         # Test Report config
@@ -48,6 +50,7 @@ server = a
 username = b
 api_token = c
 jql_filter = d
+project = e
 
 [Report]
 username = x
@@ -59,7 +62,7 @@ level = INFO
 [StatusMapping]
 Backlog = TO_DO
 In Progress = IN_PROGRESS
-1001 = DONE
+1001 = DONE ; Done status
 """
         config_obj = self._create_config_from_string(config_string)
         expected_mapping = {
@@ -76,6 +79,7 @@ server = a
 username = b
 api_token = c
 jql_filter = d
+project = e
 
 [Report]
 username = x
