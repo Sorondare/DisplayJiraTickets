@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto
+from typing import Any
 
 
 class Action(StrEnum):
@@ -20,29 +21,6 @@ class Status(StrEnum):
     IN_TEST = auto()
     DONE = auto()
 
-
-# Define status mappings as constants
-STATUS_MAPPING_FR = {
-    "À faire": Status.TO_DO,
-    "En cours": Status.IN_PROGRESS,
-    "TO REVIEW": Status.TO_REVIEW,
-    "Revue en cours": Status.IN_REVIEW,
-    "TO DEPLOY": Status.TO_DEPLOY,
-    "TO TEST": Status.TO_TEST,
-    "IN TEST": Status.IN_TEST,
-    "Terminé(e)": Status.DONE,
-}
-
-STATUS_MAPPING_EN = {
-    "To Do": Status.TO_DO,
-    "In Progress": Status.IN_PROGRESS,
-    "TO REVIEW": Status.TO_REVIEW,
-    "In Review": Status.IN_REVIEW,
-    "TO DEPLOY": Status.TO_DEPLOY,
-    "TO TEST": Status.TO_TEST,
-    "IN TEST": Status.IN_TEST,
-    "Done": Status.DONE,
-}
 
 ACTION_MAPPING = {
     Status.TO_DO: Action.EMPTY,
@@ -75,18 +53,23 @@ class Issue:
         return self.issue_type == "Bug"
 
 
-def map_status_from_jira_status_name(jira_status_name: str, language: str) -> Status:
-    if language == "fr":
-        status_mapping = STATUS_MAPPING_FR
-    elif language == "en":
-        status_mapping = STATUS_MAPPING_EN
-    else:
-        raise ValueError("Error: Invalid language specified. Please use 'en' or 'fr'.")
+def map_status(jira_status: Any, custom_mapping: dict[str, Status]) -> Status:
+    if jira_status.id in custom_mapping:
+        return custom_mapping[jira_status.id]
 
-    try:
-        return status_mapping[jira_status_name]
-    except KeyError:
-        raise ValueError(f"Unknown status: {jira_status_name} for language: {language}")
+    jira_status_name = jira_status.name.lower() if jira_status.name else None
+    if jira_status_name is not None and jira_status_name in custom_mapping:
+        return custom_mapping[jira_status_name]
+
+    status_category = jira_status.statusCategory.key
+    if status_category == 'new':
+        return Status.TO_DO
+    elif status_category == 'indeterminate':
+        return Status.IN_PROGRESS
+    elif status_category == 'done':
+        return Status.DONE
+
+    raise ValueError(f"Unable to map status: {jira_status.name} (ID: {jira_status.id}, Category: {status_category})")
 
 
 def map_action_from_status(issue_type: str, status: Status) -> Action:

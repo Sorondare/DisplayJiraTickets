@@ -1,29 +1,75 @@
 import unittest
+from unittest.mock import Mock
 from src.display_jira_tickets.issue import (
     Action,
     Status,
     Issue,
-    map_status_from_jira_status_name,
+    map_status,
     map_action_from_status,
 )
 
+# Helper mock class for Jira status objects
+class MockJiraStatus:
+    def __init__(self, id, name, status_category_key):
+        self.id = id
+        self.name = name
+        self.statusCategory = Mock()
+        self.statusCategory.key = status_category_key
+
+
+class TestMapStatus(unittest.TestCase):
+    def setUp(self):
+        self.custom_mapping = {
+            "1001": Status.TO_REVIEW,
+            "in test": Status.IN_TEST,
+            "1002": Status.DONE,
+        }
+
+    def test_map_by_id(self):
+        # This status ID is in our custom mapping
+        jira_status = MockJiraStatus("1001", "Code Review", "indeterminate")
+        status = map_status(jira_status, self.custom_mapping)
+        self.assertEqual(status, Status.TO_REVIEW)
+
+    def test_map_by_name(self):
+        # This status name is in our custom mapping
+        jira_status = MockJiraStatus("1005", "In Test", "indeterminate")
+        status = map_status(jira_status, self.custom_mapping)
+        self.assertEqual(status, Status.IN_TEST)
+
+    def test_id_has_priority_over_name(self):
+        # Both ID and name are in the mapping, ID should win
+        jira_status = MockJiraStatus("1002", "In Test", "done")
+        status = map_status(jira_status, self.custom_mapping)
+        self.assertEqual(status, Status.DONE)
+
+    def test_fallback_to_category_new(self):
+        # This status is not in the mapping, should fallback to 'new' category
+        jira_status = MockJiraStatus("1", "To Do", "new")
+        status = map_status(jira_status, {}) # Empty mapping
+        self.assertEqual(status, Status.TO_DO)
+
+    def test_fallback_to_category_indeterminate(self):
+        # This status is not in the mapping, should fallback to 'indeterminate'
+        jira_status = MockJiraStatus("3", "In Progress", "indeterminate")
+        status = map_status(jira_status, {}) # Empty mapping
+        self.assertEqual(status, Status.IN_PROGRESS)
+
+    def test_fallback_to_category_done(self):
+        # This status is not in the mapping, should fallback to 'done'
+        jira_status = MockJiraStatus("10000", "Done", "done")
+        status = map_status(jira_status, {}) # Empty mapping
+        self.assertEqual(status, Status.DONE)
+
+    def test_unmappable_status_raises_error(self):
+        # This status has an unknown category and is not in the mapping
+        jira_status = MockJiraStatus("99", "Unknown", "unknown_category")
+        with self.assertRaises(ValueError) as cm:
+            map_status(jira_status, {})
+        self.assertIn("Unable to map status", str(cm.exception))
+
 
 class TestIssue(unittest.TestCase):
-    def test_map_status_from_jira_status_name_fr(self):
-        self.assertEqual(map_status_from_jira_status_name("À faire", "fr"), Status.TO_DO)
-        self.assertEqual(map_status_from_jira_status_name("En cours", "fr"), Status.IN_PROGRESS)
-        self.assertEqual(map_status_from_jira_status_name("Terminé(e)", "fr"), Status.DONE)
-        with self.assertRaises(ValueError):
-            map_status_from_jira_status_name("Unknown Status", "fr")
-        with self.assertRaises(ValueError):
-            map_status_from_jira_status_name("À faire", "es")
-
-    def test_map_status_from_jira_status_name_en(self):
-        self.assertEqual(map_status_from_jira_status_name("To Do", "en"), Status.TO_DO)
-        self.assertEqual(map_status_from_jira_status_name("In Progress", "en"), Status.IN_PROGRESS)
-        self.assertEqual(map_status_from_jira_status_name("Done", "en"), Status.DONE)
-        with self.assertRaises(ValueError):
-            map_status_from_jira_status_name("Unknown Status", "en")
 
     def test_map_action_from_status(self):
         self.assertEqual(map_action_from_status("Story", Status.IN_PROGRESS), Action.IMPLEMENTATION)

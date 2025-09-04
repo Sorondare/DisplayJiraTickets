@@ -2,7 +2,6 @@
 server = <host url>
 username = <username>
 api_token = <api token>
-language = <jira displayed language (default: en)>
 jql_filter = project = "MyProject" AND assignee = currentUser() AND sprint in openSprints()
 
 [Report]
@@ -11,3 +10,15 @@ introduction = <introduction to the ticket list output>
 
 [Logging]
 level = INFO
+
+[StatusMapping]
+# Map here the names of the statuses of your Jira workflow (the canonical names, not translated)
+# with the internal statuses of the application.
+# Available internal statuses: TO_DO, IN_PROGRESS, TO_REVIEW, IN_REVIEW, TO_DEPLOY, TO_TEST, IN_TEST, DONE
+#
+# Example:
+#   Backlog = TO_DO
+#   In Progress = IN_PROGRESS
+#   Code Review = TO_REVIEW
+#   Ready for Test = TO_TEST
+#   Done = DONE
