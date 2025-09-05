@@ -12,6 +12,7 @@ class JiraConfig:
     username: str
     api_token: str
     jql_filter: str
+    project: str
     status_mapping: dict[str, Status]
 
 
@@ -42,6 +43,7 @@ class Config:
             username=config.get('Jira', 'username'),
             api_token=config.get('Jira', 'api_token'),
             jql_filter=config.get('Jira', 'jql_filter'),
+            project=config.get('Jira', 'project_key'),
             status_mapping=status_mapping,
         )
 

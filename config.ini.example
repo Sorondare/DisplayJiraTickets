@@ -3,6 +3,7 @@ server = <host url>
 username = <username>
 api_token = <api token>
 jql_filter = project = "MyProject" AND assignee = currentUser() AND sprint in openSprints()
+project = <project name>
 
 [Report]
 username = <jira username used in issues>

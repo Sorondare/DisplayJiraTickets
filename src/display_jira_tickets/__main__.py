@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from .config import Config
+from .config_file_initializer import ConfigFileInitializer
 from .jira_client import JiraClient
 from .reporter import Reporter
 
@@ -12,6 +13,7 @@ DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 def main():
     parser = argparse.ArgumentParser(description="Displays a summary of daily Jira tickets.")
     parser.add_argument("-c", "--config", default="config.ini", help="Path to the configuration file.")
+    parser.add_argument("-i", "--init", action="store_true", help="Initialize the configuration file.")
     args = parser.parse_args()
 
     try:
@@ -27,6 +29,14 @@ def main():
 
     try:
         jira_client = JiraClient(config.jira_config)
+
+        if args.init:
+            logging.info("Initializing configuration file at %s", args.config)
+            initializer = ConfigFileInitializer(args.config)
+            initializer.initialize_status_mapping(jira_client, config.jira_config.project)
+            logging.info("Configuration file initialized successfully.")
+            sys.exit(0)
+
         issues = jira_client.fetch_issues()
 
         reporter = Reporter(config.report_config)

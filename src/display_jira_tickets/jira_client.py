@@ -52,3 +52,11 @@ class JiraClient:
         except Exception as e:
             self.logger.error("Failed to fetch issues from Jira: %s", e)
             raise
+
+    def fetch_jira_statuses(self) -> list:
+        self.logger.info("Fetching statuses from Jira server")
+        try:
+            return self.jira.statuses()
+        except Exception as e:
+            self.logger.error("Failed to fetch Jira Server issue statuses: %s", e)
+            raise

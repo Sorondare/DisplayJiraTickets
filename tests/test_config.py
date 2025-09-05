@@ -17,6 +17,7 @@ server = https://jira.example.com
 username = testuser
 api_token = testtoken
 jql_filter = project = 'TEST'
+project_key = TEST_PROJECT
 
 [Report]
 username = reportuser
@@ -32,6 +33,7 @@ level = DEBUG
         self.assertEqual(config_obj.jira_config.username, "testuser")
         self.assertEqual(config_obj.jira_config.api_token, "testtoken")
         self.assertEqual(config_obj.jira_config.jql_filter, "project = 'TEST'")
+        self.assertEqual(config_obj.jira_config.project, "TEST_PROJECT")
         self.assertEqual(config_obj.jira_config.status_mapping, {}) # No mapping section
 
         # Test Report config
@@ -48,6 +50,7 @@ server = a
 username = b
 api_token = c
 jql_filter = d
+project_key = e
 
 [Report]
 username = x
@@ -76,6 +79,7 @@ server = a
 username = b
 api_token = c
 jql_filter = d
+project_key = e
 
 [Report]
 username = x
