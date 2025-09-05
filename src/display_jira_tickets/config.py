@@ -43,7 +43,7 @@ class Config:
             username=config.get('Jira', 'username'),
             api_token=config.get('Jira', 'api_token'),
             jql_filter=config.get('Jira', 'jql_filter'),
-            project=config.get('Jira', 'project'),
+            project=config.get('Jira', 'project_key'),
             status_mapping=status_mapping,
         )
 
@@ -52,8 +52,6 @@ class Config:
         status_mapping = {}
         if config.has_section('StatusMapping'):
             for key, value in config.items('StatusMapping'):
-                # remove comment
-                value = value.split(';')[0].strip()
                 try:
                     status_mapping[key] = Status[value.upper()]
                 except KeyError:

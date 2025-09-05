@@ -1,4 +1,6 @@
 import configparser
+
+from .issue import Status
 from .jira_client import JiraClient
 
 
@@ -9,14 +11,15 @@ class ConfigFileInitializer:
         self.config.read(self.config_file_path)
 
     def initialize_status_mapping(self, jira_client: JiraClient, project_name: str):
-        statuses = jira_client.fetch_project_statuses(project_name)
+        statuses = jira_client.fetch_jira_statuses()
 
         if not self.config.has_section('StatusMapping'):
             self.config.add_section('StatusMapping')
 
         for status in statuses:
             if not self.config.has_option('StatusMapping', status.id):
-                self.config.set('StatusMapping', status.id, f'TO_DO ; {status.name}')
+                self.config.set('StatusMapping', f'# {status.name}')
+                self.config.set('StatusMapping', status.id, Status.TO_DO)
 
         with open(self.config_file_path, 'w') as configfile:
             self.config.write(configfile)

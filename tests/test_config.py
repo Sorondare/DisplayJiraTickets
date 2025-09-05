@@ -17,7 +17,7 @@ server = https://jira.example.com
 username = testuser
 api_token = testtoken
 jql_filter = project = 'TEST'
-project = TEST_PROJECT
+project_key = TEST_PROJECT
 
 [Report]
 username = reportuser
@@ -50,7 +50,7 @@ server = a
 username = b
 api_token = c
 jql_filter = d
-project = e
+project_key = e
 
 [Report]
 username = x
@@ -62,7 +62,7 @@ level = INFO
 [StatusMapping]
 Backlog = TO_DO
 In Progress = IN_PROGRESS
-1001 = DONE ; Done status
+1001 = DONE
 """
         config_obj = self._create_config_from_string(config_string)
         expected_mapping = {
@@ -79,7 +79,7 @@ server = a
 username = b
 api_token = c
 jql_filter = d
-project = e
+project_key = e
 
 [Report]
 username = x

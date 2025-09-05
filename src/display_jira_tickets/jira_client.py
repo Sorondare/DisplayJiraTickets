@@ -53,13 +53,10 @@ class JiraClient:
             self.logger.error("Failed to fetch issues from Jira: %s", e)
             raise
 
-    def fetch_project_statuses(self, project_name: str) -> list:
-        self.logger.info("Fetching statuses for project: %s", project_name)
+    def fetch_jira_statuses(self) -> list:
+        self.logger.info("Fetching statuses from Jira server")
         try:
-            project = self.jira.project(project_name)
-            statuses = self.jira.project_statuses(project)
-            self.logger.info("Found %d statuses for project %s.", len(statuses), project_name)
-            return statuses
+            return self.jira.statuses()
         except Exception as e:
-            self.logger.error("Failed to fetch project statuses from Jira: %s", e)
+            self.logger.error("Failed to fetch Jira Server issue statuses: %s", e)
             raise

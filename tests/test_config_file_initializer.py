@@ -17,7 +17,7 @@ class TestConfigFileInitializer(unittest.TestCase):
         status2.id = '3'
         status2.name = 'In Progress'
 
-        mock_jira_client.fetch_project_statuses.return_value = [status1, status2]
+        mock_jira_client.fetch_jira_statuses.return_value = [status1, status2]
 
         with patch('builtins.open', mock_open(read_data='')) as mock_file:
             initializer = ConfigFileInitializer('dummy_path')
@@ -34,8 +34,8 @@ class TestConfigFileInitializer(unittest.TestCase):
             config.read_string(written_config)
 
             self.assertTrue(config.has_section('StatusMapping'))
-            self.assertEqual(config.get('StatusMapping', '1'), 'TO_DO ; To Do')
-            self.assertEqual(config.get('StatusMapping', '3'), 'TO_DO ; In Progress')
+            self.assertEqual(config.get('StatusMapping', '1').upper(), 'TO_DO')
+            self.assertEqual(config.get('StatusMapping', '3').upper(), 'TO_DO')
 
 if __name__ == '__main__':
     unittest.main()
