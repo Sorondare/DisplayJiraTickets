@@ -35,6 +35,7 @@ Le fichier `.ini` doit contenir une section `[Jira]` avec les clés suivantes :
 - **`username`** : le nom d'utilisateur de l'instance Jira.
 - **`api_token`** : le jeton de l'API Jira associé au compte utilisateur indiqué.
 - **`jql_filter`** : la requête JQL pour filtrer les tickets.
+- **`project_key`** : la clef du projet Jira (par exemple "PROJ").
 
 Voici un exemple de structure correcte d'un fichier `.ini` :
 
@@ -45,6 +46,7 @@ username = <username>
 api_token = <api token>
 language = <jira displayed language (default: en)>
 jql_filter = project = "MyProject" AND assignee = currentUser() AND sprint in openSprints()
+project_key = <project key>
 
 [Report]
 username = <jira username used in issues>
@@ -52,6 +54,48 @@ introduction = <introduction to the ticket list output>
 
 [Logging]
 level = INFO
+```
+
+#### Initialisation automatique du mapping des statuts
+Pour faciliter la configuration du mapping des statuts Jira, vous pouvez utiliser l'argument `--init`. Cette commande va :
+1. Se connecter à Jira en utilisant les informations de la section `[Jira]` de votre `config.ini`.
+2. Récupérer tous les statuts disponibles pour le projet spécifié par `project_key` et les injecter (ou compléter) dans la section `[StatusMapping]` de votre `config.ini`.
+
+Pour utiliser cette fonctionnalité, lancez la commande :
+```bash
+display-daily-tickets --init
+```
+
+Une fois l'initialisation terminée, ouvrez votre `config.ini`. Vous y trouverez la section `[StatusMapping]`. Vous devez alors **manuellement** modifier les valeurs pour qu'elles correspondent aux statuts internes du script. Les valeurs possibles sont :
+- `TO_DO`
+- `IN_PROGRESS`
+- `TO_REVIEW`
+- `IN_REVIEW`
+- `TO_DEPLOY`
+- `TO_TEST`
+- `IN_TEST`
+- `DONE`
+
+Exemple de section `[StatusMapping]` après initialisation :
+```ini
+[StatusMapping]
+# En cours
+10001 = TO_DO
+# Terminé
+10002 = TO_DO
+# À faire
+10003 = TO_DO
+```
+
+Vous devrez la modifier comme suit (les IDs et noms de statuts sont des exemples) :
+```ini
+[StatusMapping]
+# En cours
+10001 = IN_PROGRESS
+# Terminé
+10002 = DONE
+# À faire
+10003 = TO_DO
 ```
 
 ### 4. Lancer le script
