@@ -28,7 +28,11 @@ class JiraClient:
         jql_filter = f"{self.config.jql_filter} ORDER BY updated ASC"
         self.logger.info("Fetching issues using JQL: %s", jql_filter)
         try:
-            jira_issues = self.jira.search_issues(jql_filter, maxResults=1000)
+            jira_issues = self.jira.search_issues(
+                jql_filter,
+                maxResults=1000,
+                fields="key,summary,status,assignee,issuetype,updated"
+            )
 
             issues = []
             for jira_issue in jira_issues:
