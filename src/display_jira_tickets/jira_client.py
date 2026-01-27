@@ -25,10 +25,10 @@ class JiraClient:
             raise
 
     def fetch_issues(self) -> list[Issue]:
-        self.logger.info("Fetching issues using JQL: %s", self.config.jql_filter)
+        jql_filter = f"{self.config.jql_filter} ORDER BY updated ASC"
+        self.logger.info("Fetching issues using JQL: %s", jql_filter)
         try:
-            jira_issues = self.jira.search_issues(self.config.jql_filter, maxResults=1000)
-            jira_issues.sort(key=lambda i: i.fields.updated)
+            jira_issues = self.jira.search_issues(jql_filter, maxResults=1000)
 
             issues = []
             for jira_issue in jira_issues:
