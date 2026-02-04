@@ -31,7 +31,7 @@ class JiraClient:
             jira_issues = self.jira.search_issues(
                 jql_filter,
                 maxResults=1000,
-                fields="key,summary,status,assignee,issuetype,updated"
+                fields="key,summary,status,assignee,issuetype"
             )
 
             issues = []
