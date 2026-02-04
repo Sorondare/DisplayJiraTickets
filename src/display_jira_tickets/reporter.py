@@ -10,7 +10,7 @@ class Reporter:
 
     def generate_report(self, issues: list[Issue]):
         self.logger.info("Generating report...")
-        print(self.config.introduction)
+        report_lines = [self.config.introduction]
         for issue in issues:
             if issue.is_valid():
                 printed_action = issue.action + (
@@ -18,7 +18,8 @@ class Reporter:
                     if self.config.username == issue.assignee and issue.status in (Status.IN_PROGRESS, Status.IN_REVIEW, Status.IN_TEST)
                     else ""
                 )
-                print(f"{issue.issue_key} {issue.summary} : {printed_action}")
+                report_lines.append(f"{issue.issue_key} {issue.summary} : {printed_action}")
             else:
                 self.logger.warning("Invalid issue skipped: %s", issue)
+        print("\n".join(report_lines))
         self.logger.info("Report generation complete.")
