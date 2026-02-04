@@ -34,19 +34,38 @@ class JiraClient:
                 fields="key,summary,status,assignee,issuetype"
             )
 
-            issues = [
-                # Note: 'issue_type' and 'status' are assigned using the walrus operator
-                # and subsequently used in 'action'. The order of arguments is significant.
-                Issue(
+            issues = []
+            status_cache = {}
+            action_cache = {}
+
+            for jira_issue in jira_issues:
+                issue_type = jira_issue.fields.issuetype.name
+                jira_status = jira_issue.fields.status
+                status_id = jira_status.id
+
+                # Cache status mapping
+                if status_id in status_cache:
+                    status = status_cache[status_id]
+                else:
+                    status = map_status(jira_status, self.config.status_mapping)
+                    status_cache[status_id] = status
+
+                # Cache action mapping
+                action_key = (issue_type, status)
+                if action_key in action_cache:
+                    action = action_cache[action_key]
+                else:
+                    action = map_action_from_status(issue_type, status)
+                    action_cache[action_key] = action
+
+                issues.append(Issue(
                     issue_key=jira_issue.key,
-                    issue_type=(issue_type := jira_issue.fields.issuetype.name),
+                    issue_type=issue_type,
                     summary=jira_issue.fields.summary,
-                    status=(status := map_status(jira_issue.fields.status, self.config.status_mapping)),
+                    status=status,
                     assignee=jira_issue.fields.assignee.displayName if jira_issue.fields.assignee else None,
-                    action=map_action_from_status(issue_type, status),
-                )
-                for jira_issue in jira_issues
-            ]
+                    action=action,
+                ))
 
             for issue in issues:
                 self.logger.debug("Extracted issue: %s", issue)
