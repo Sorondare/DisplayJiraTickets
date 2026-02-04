@@ -34,22 +34,22 @@ class JiraClient:
                 fields="key,summary,status,assignee,issuetype"
             )
 
-            issues = []
-            for jira_issue in jira_issues:
-                issue_type = jira_issue.fields.issuetype.name
-                status = map_status(jira_issue.fields.status, self.config.status_mapping)
-                action = map_action_from_status(issue_type, status)
-
-                issue = Issue(
+            issues = [
+                # Note: 'issue_type' and 'status' are assigned using the walrus operator
+                # and subsequently used in 'action'. The order of arguments is significant.
+                Issue(
                     issue_key=jira_issue.key,
-                    issue_type=issue_type,
+                    issue_type=(issue_type := jira_issue.fields.issuetype.name),
                     summary=jira_issue.fields.summary,
-                    status=status,
+                    status=(status := map_status(jira_issue.fields.status, self.config.status_mapping)),
                     assignee=jira_issue.fields.assignee.displayName if jira_issue.fields.assignee else None,
-                    action=action,
+                    action=map_action_from_status(issue_type, status),
                 )
+                for jira_issue in jira_issues
+            ]
+
+            for issue in issues:
                 self.logger.debug("Extracted issue: %s", issue)
-                issues.append(issue)
 
             self.logger.info("Found %d issues.", len(issues))
             return issues
