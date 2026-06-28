@@ -37,7 +37,7 @@ def main():
             logging.info("Configuration file initialized successfully.")
             sys.exit(0)
 
-        issues = jira_client.fetch_issues()
+        issues = jira_client.fetch_issues(config.report_config.username)
 
         reporter = Reporter(config.report_config)
         reporter.generate_report(issues)

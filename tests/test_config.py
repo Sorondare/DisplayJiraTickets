@@ -32,7 +32,6 @@ level = DEBUG
         self.assertEqual(config_obj.jira_config.server, "https://jira.example.com")
         self.assertEqual(config_obj.jira_config.username, "testuser")
         self.assertEqual(config_obj.jira_config.api_token, "testtoken")
-        self.assertEqual(config_obj.jira_config.jql_filter, "project = 'TEST'")
         self.assertEqual(config_obj.jira_config.project, "TEST_PROJECT")
         self.assertEqual(config_obj.jira_config.status_mapping, {}) # No mapping section
 

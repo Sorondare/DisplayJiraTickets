@@ -34,7 +34,6 @@ Le fichier `.ini` doit contenir une section `[Jira]` avec les clés suivantes :
 - **`server`** : l'URL du serveur Jira auquel se connecter.
 - **`username`** : le nom d'utilisateur de l'instance Jira.
 - **`api_token`** : le jeton de l'API Jira associé au compte utilisateur indiqué.
-- **`jql_filter`** : la requête JQL pour filtrer les tickets.
 - **`project_key`** : la clef du projet Jira (par exemple "PROJ").
 
 Voici un exemple de structure correcte d'un fichier `.ini` :
@@ -45,7 +44,6 @@ server = <host url>
 username = <username>
 api_token = <api token>
 language = <jira displayed language (default: en)>
-jql_filter = project = "MyProject" AND assignee = currentUser() AND sprint in openSprints()
 project_key = <project key>
 
 [Report]

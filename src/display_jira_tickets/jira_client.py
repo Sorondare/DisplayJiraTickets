@@ -24,29 +24,33 @@ class JiraClient:
             self.logger.error("Failed to connect to Jira: %s", e)
             raise
 
-    def fetch_issues(self) -> list[Issue]:
-        jql_filter = f"{self.config.jql_filter} ORDER BY updated ASC"
+    def fetch_issues(self, report_username: str) -> list[Issue]:
+        jql_filter = f'project = "{self.config.project}" AND updated >= startOfDay() ORDER BY updated ASC'
         self.logger.info("Fetching issues using JQL: %s", jql_filter)
         try:
             jira_issues = self.jira.search_issues(
                 jql_filter,
                 maxResults=1000,
-                fields="key,summary,status,assignee,issuetype"
+                fields="key,summary,status,assignee,issuetype,comment",
+                expand="changelog"
             )
 
-            issues = [
-                # Note: 'issue_type' and 'status' are assigned using the walrus operator
-                # and subsequently used in 'action'. The order of arguments is significant.
-                Issue(
+            issues = []
+            for jira_issue in jira_issues:
+                issue_type = jira_issue.fields.issuetype.name
+                current_status = map_status(jira_issue.fields.status, self.config.status_mapping)
+                assignee = jira_issue.fields.assignee.displayName if jira_issue.fields.assignee else None
+
+                issue_obj = Issue(
                     issue_key=jira_issue.key,
-                    issue_type=(issue_type := jira_issue.fields.issuetype.name),
+                    issue_type=issue_type,
                     summary=jira_issue.fields.summary,
-                    status=(status := map_status(jira_issue.fields.status, self.config.status_mapping)),
-                    assignee=jira_issue.fields.assignee.displayName if jira_issue.fields.assignee else None,
-                    action=map_action_from_status(issue_type, status),
+                    status=current_status,
+                    assignee=assignee,
+                    daily_actions=[]
                 )
-                for jira_issue in jira_issues
-            ]
+                issue_obj.extract_daily_actions(jira_issue, report_username, self.config.status_mapping)
+                issues.append(issue_obj)
 
             for issue in issues:
                 self.logger.debug("Extracted issue: %s", issue)

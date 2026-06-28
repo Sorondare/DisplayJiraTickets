@@ -81,15 +81,15 @@ class TestIssue(unittest.TestCase):
             map_action_from_status("Story", "Unknown Status")
 
     def test_issue_is_valid(self):
-        valid_issue = Issue("KEY-1", "Bug", "Summary", Status.TO_DO, "User", Action.EMPTY)
+        valid_issue = Issue("KEY-1", "Bug", "Summary", Status.TO_DO, "User", [])
         self.assertTrue(valid_issue.is_valid())
-        invalid_issue = Issue(None, "Bug", "Summary", Status.TO_DO, "User", Action.EMPTY)
+        invalid_issue = Issue(None, "Bug", "Summary", Status.TO_DO, "User", [])
         self.assertFalse(invalid_issue.is_valid())
 
     def test_issue_is_bug(self):
-        bug_issue = Issue("KEY-1", "Bug", "Summary", Status.TO_DO, "User", Action.EMPTY)
+        bug_issue = Issue("KEY-1", "Bug", "Summary", Status.TO_DO, "User", [])
         self.assertTrue(bug_issue.is_bug())
-        story_issue = Issue("KEY-1", "Story", "Summary", Status.TO_DO, "User", Action.EMPTY)
+        story_issue = Issue("KEY-1", "Story", "Summary", Status.TO_DO, "User", [])
         self.assertFalse(story_issue.is_bug())
 
 
