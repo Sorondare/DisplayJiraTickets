@@ -12,6 +12,8 @@ class Action(StrEnum):
     TO_TEST = 'Soumission pour test'
     TEST = 'Test'
     DONE = 'Terminé'
+    DISCUSSION = 'Discussion'
+    DESCRIPTION_UPDATE = 'Modification de la description'
     EMPTY = ''
 
 
@@ -105,33 +107,42 @@ class Issue:
                             events.append((history_created, str(action)))
                         except Exception:
                             pass
+                    elif item.field == 'description':
+                        events.append((history_created, str(Action.DESCRIPTION_UPDATE)))
 
         # Parse comments
         if hasattr(jira_issue.fields, 'comment') and hasattr(jira_issue.fields.comment, 'comments'):
             for comment in jira_issue.fields.comment.comments:
+                # Check for comment creation
                 comment_created = datetime.strptime(comment.created, "%Y-%m-%dT%H:%M:%S.%f%z")
-                if comment_created < start_of_day:
-                    continue
+                if comment_created >= start_of_day:
+                    author = comment.author.displayName if hasattr(comment, 'author') and hasattr(comment.author, 'displayName') else None
+                    author_matches = False
+                    if author == report_username:
+                        author_matches = True
+                    elif hasattr(comment, 'author') and hasattr(comment.author, 'name') and comment.author.name == report_username:
+                        author_matches = True
+                    elif hasattr(comment, 'author') and hasattr(comment.author, 'emailAddress') and report_username in comment.author.emailAddress:
+                        author_matches = True
 
-                author = comment.author.displayName if hasattr(comment, 'author') and hasattr(comment.author, 'displayName') else None
-                author_matches = False
-                if author == report_username:
-                    author_matches = True
-                elif hasattr(comment, 'author') and hasattr(comment.author, 'name') and comment.author.name == report_username:
-                    author_matches = True
-                elif hasattr(comment, 'author') and hasattr(comment.author, 'emailAddress') and report_username in comment.author.emailAddress:
-                    author_matches = True
+                    if author_matches:
+                        events.append((comment_created, str(Action.DISCUSSION)))
 
-                if not author_matches:
-                    continue
+                # Check for comment update
+                if hasattr(comment, 'updated') and comment.updated != comment.created:
+                    comment_updated = datetime.strptime(comment.updated, "%Y-%m-%dT%H:%M:%S.%f%z")
+                    if comment_updated >= start_of_day:
+                        update_author = comment.updateAuthor.displayName if hasattr(comment, 'updateAuthor') and hasattr(comment.updateAuthor, 'displayName') else None
+                        update_author_matches = False
+                        if update_author == report_username:
+                            update_author_matches = True
+                        elif hasattr(comment, 'updateAuthor') and hasattr(comment.updateAuthor, 'name') and comment.updateAuthor.name == report_username:
+                            update_author_matches = True
+                        elif hasattr(comment, 'updateAuthor') and hasattr(comment.updateAuthor, 'emailAddress') and report_username in comment.updateAuthor.emailAddress:
+                            update_author_matches = True
 
-                # Default to the current status of the issue when the comment was made
-                # (For simplicity, we use the issue's overall current status as a proxy for the administrative action)
-                try:
-                    action = map_action_from_status(self.issue_type, self.status)
-                    events.append((comment_created, str(action)))
-                except Exception:
-                    pass
+                        if update_author_matches:
+                            events.append((comment_updated, str(Action.DISCUSSION)))
 
         # Sort events chronologically
         events.sort(key=lambda x: x[0])
