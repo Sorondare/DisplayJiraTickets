@@ -5,13 +5,9 @@ Ce script Python utilise un fichier de configuration au format `.ini` afin d'acc
 
 ### 1. Préparation de votre environnement
 
-1. Assurez-vous que Python (version 3.12 ou supérieure) est installé sur votre machine. Vous pouvez le télécharger à partir de [python.org](https://www.python.org/).
-2. Créez et activez un environnement virtuel pour isoler vos dépendances Python :
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate    # Sous Linux/macOS
-   .venv\Scripts\activate       # Sous Windows
-   ```
+Assurez-vous que Python (version 3.12 ou supérieure) est installé sur votre machine. Vous pouvez le télécharger à partir de [python.org](https://www.python.org/).
+
+Nous utilisons **uv** pour gérer les dépendances et l'exécution du projet de manière rapide et isolée. Installez `uv` en suivant la documentation officielle ou via `curl -LsSf https://astral.sh/uv/install.sh | sh` (ou `pip install uv`).
 
 ### 2. Installation des dépendances
 
@@ -20,9 +16,9 @@ Ce script Python utilise un fichier de configuration au format `.ini` afin d'acc
    git clone https://github.com/Sorondare/DisplayJiraTickets
    cd DisplayJiraTickets
    ```
-2. Installez les dépendances via `pip` :
+2. Installez les dépendances et préparez l'environnement avec `uv` :
    ```bash
-   pip install .
+   uv sync
    ```
 
 ### 3. Création et configuration du fichier `.ini`
@@ -61,7 +57,7 @@ Pour faciliter la configuration du mapping des statuts Jira, vous pouvez utilise
 
 Pour utiliser cette fonctionnalité, lancez la commande :
 ```bash
-display-daily-tickets --init
+uv run display-daily-tickets --init
 ```
 
 Une fois l'initialisation terminée, ouvrez votre `config.ini`. Vous y trouverez la section `[StatusMapping]`. Vous devez alors **manuellement** modifier les valeurs pour qu'elles correspondent aux statuts internes du script. Les valeurs possibles sont :
@@ -98,20 +94,19 @@ Vous devrez la modifier comme suit (les IDs et noms de statuts sont des exemples
 
 ### 4. Lancer le script
 
-1. Une fois la configuration complète, exécutez le script à l'aide de la commande définie dans le fichier `pyproject.toml` :
+1. Une fois la configuration complète, exécutez le script via `uv` :
    ```bash
-   display-daily-tickets
+   uv run display-daily-tickets
    ```
-   **Optionnel** : Si vous n'avez pas installé le package et que vous souhaitez l'exécuter depuis les sources (ou une fois compilé en tant que script autonome), utilisez la commande suivante depuis la racine du projet :
+   **Optionnel** : Si vous souhaitez l'exécuter directement depuis les sources sans utiliser le script de projet configuré, utilisez la commande suivante depuis la racine du projet :
    ```bash
-   python src/display.py
+   uv run python src/display.py
    ```
-   Vous pouvez également utiliser des outils comme PyInstaller pour compiler `src/display.py` en un exécutable standalone.
 
 ### 5. Lancer les tests
 Pour lancer la suite de tests unitaires, utilisez la commande suivante à la racine du projet :
 ```bash
-PYTHONPATH=src python -m unittest discover tests
+PYTHONPATH=src uv run python -m unittest discover tests
 ```
 
 ### 6. Résoudre les éventuels problèmes

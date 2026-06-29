@@ -5,7 +5,8 @@ Ce fichier définit le cadre technique, les conventions et les règles de concep
 ## 1. Type de technologie
 
 *   **Langage :** Python 3.12 minimum.
-*   **Système de build / Packaging :** `setuptools` (défini dans `pyproject.toml`).
+*   **Système de build / Packaging :** `hatchling` (défini dans `pyproject.toml`).
+*   **Gestion de projet et dépendances :** `uv`.
 *   **Dépendances principales :**
     *   `jira` (API client Jira).
 *   **Structure du projet :** Layout "src" standard.
@@ -29,8 +30,8 @@ Ce fichier définit le cadre technique, les conventions et les règles de concep
 
 *   **Framework :** Utiliser le module standard `unittest`.
 *   **Exécution :** Les tests doivent être exécutables depuis la racine du dépôt.
-    *   Commande standard : `PYTHONPATH=src python -m unittest discover tests`
-    *   *Note:* L'ajout de `PYTHONPATH=src` est indispensable si le package n'est pas installé via `pip install -e .` pour que les imports fonctionnent correctement avec la nouvelle structure standalone.
+    *   Commande standard : `PYTHONPATH=src uv run python -m unittest discover tests`
+    *   *Note:* L'ajout de `PYTHONPATH=src` est indispensable pour que les imports fonctionnent correctement avec la structure standalone.
 *   **Mocking :**
     *   Les appels réseau (via le client Jira) DOIVENT être mockés dans les tests unitaires. Le constructeur `JiraClient.__init__` initialise la connexion, donc `jira.JIRA` doit être mocké.
     *   *Environnements restreints :* Si la bibliothèque `jira` ne peut pas être installée, mocker explicitement le module en haut des tests ou via l'appel en ligne de commande :
@@ -40,9 +41,13 @@ Ce fichier définit le cadre technique, les conventions et les règles de concep
         sys.modules['jira'] = MagicMock()
         ```
         Exemple de commande de test robuste :
-        `PYTHONPATH=src python -c "import sys; from unittest.mock import MagicMock; sys.modules['jira'] = MagicMock(); import unittest; unittest.main(module=None, argv=['unittest', 'discover', 'tests'])"`
+        `PYTHONPATH=src uv run python -c "import sys; from unittest.mock import MagicMock; sys.modules['jira'] = MagicMock(); import unittest; unittest.main(module=None, argv=['unittest', 'discover', 'tests'])"`
 
 ## 4. Configuration
 
 *   La configuration est gérée via un fichier `config.ini` à la racine (basé sur `config.ini.example`).
 *   Ce fichier contient les identifiants Jira et les réglages spécifiques (filtres JQL, mapping de statuts).
+
+## 5. Gestion de version (Git)
+
+*   **Messages de Commit :** Tous les messages de commit DOIVENT obligatoirement suivre la norme **Conventional Commits** (ex: `feat: add new feature`, `fix: resolve bug in Jira client`, `docs: update README`, `chore: update dependencies via uv`).
