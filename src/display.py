@@ -1,12 +1,13 @@
+#!/usr/bin/env python3
 import argparse
 import logging
 import sys
 from pathlib import Path
 
-from .config import Config
-from .config_file_initializer import ConfigFileInitializer
-from .jira_client import JiraClient
-from .reporter import Reporter
+from config import Config
+from config_file_initializer import ConfigFileInitializer
+from jira_client import JiraClient
+from reporter import Reporter
 
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'

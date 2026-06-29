@@ -1,7 +1,7 @@
 import logging
 from jira import JIRA
-from .config import JiraConfig
-from .issue import Issue, map_status, map_action_from_status
+from config import JiraConfig
+from issue import Issue, map_status, map_action_from_status
 
 
 class JiraClient:

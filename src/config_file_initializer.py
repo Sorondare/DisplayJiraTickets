@@ -1,7 +1,7 @@
 import configparser
 
-from .issue import Status
-from .jira_client import JiraClient
+from issue import Status
+from jira_client import JiraClient
 
 
 class ConfigFileInitializer:

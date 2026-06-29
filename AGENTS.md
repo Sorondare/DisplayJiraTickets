@@ -29,8 +29,8 @@ Ce fichier définit le cadre technique, les conventions et les règles de concep
 
 *   **Framework :** Utiliser le module standard `unittest`.
 *   **Exécution :** Les tests doivent être exécutables depuis la racine du dépôt.
-    *   Commande standard : `PYTHONPATH=. python -m unittest discover tests`
-    *   *Note:* L'ajout de `PYTHONPATH=.` est indispensable si le package n'est pas installé via `pip install -e .` pour que les imports de type `from display_jira_tickets...` fonctionnent.
+    *   Commande standard : `PYTHONPATH=src python -m unittest discover tests`
+    *   *Note:* L'ajout de `PYTHONPATH=src` est indispensable si le package n'est pas installé via `pip install -e .` pour que les imports fonctionnent correctement avec la nouvelle structure standalone.
 *   **Mocking :**
     *   Les appels réseau (via le client Jira) DOIVENT être mockés dans les tests unitaires. Le constructeur `JiraClient.__init__` initialise la connexion, donc `jira.JIRA` doit être mocké.
     *   *Environnements restreints :* Si la bibliothèque `jira` ne peut pas être installée, mocker explicitement le module en haut des tests ou via l'appel en ligne de commande :
@@ -40,7 +40,7 @@ Ce fichier définit le cadre technique, les conventions et les règles de concep
         sys.modules['jira'] = MagicMock()
         ```
         Exemple de commande de test robuste :
-        `PYTHONPATH=. python -c "import sys; from unittest.mock import MagicMock; sys.modules['jira'] = MagicMock(); import unittest; unittest.main(module=None, argv=['unittest', 'discover', 'tests'])"`
+        `PYTHONPATH=src python -c "import sys; from unittest.mock import MagicMock; sys.modules['jira'] = MagicMock(); import unittest; unittest.main(module=None, argv=['unittest', 'discover', 'tests'])"`
 
 ## 4. Configuration
 

@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.display_jira_tickets.jira_client import JiraClient
+from jira_client import JiraClient
 
 
 class TestJiraClient(unittest.TestCase):
-    @patch('src.display_jira_tickets.jira_client.JIRA')
+    @patch('jira_client.JIRA')
     def test_fetch_project_statuses(self, mock_jira_class):
         # Arrange
         mock_jira_instance = MagicMock()
@@ -34,7 +34,7 @@ class TestJiraClient(unittest.TestCase):
         self.assertEqual(len(statuses), 2)
         mock_jira_instance.statuses.assert_called_once()
 
-    @patch('src.display_jira_tickets.jira_client.JIRA')
+    @patch('jira_client.JIRA')
     def test_fetch_issues_optimized_fields(self, mock_jira_class):
         # Arrange
         mock_jira_instance = MagicMock()

@@ -30,10 +30,8 @@ dependencies = [
 Repository = "https://github.com/Sorondare/DisplayJiraTickets"
 
 [project.scripts]
-display-daily-tickets = "display_jira_tickets.__main__:main"
+display-daily-tickets = "display:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
+py-modules = ["display", "config", "config_file_initializer", "issue", "jira_client", "reporter"]
