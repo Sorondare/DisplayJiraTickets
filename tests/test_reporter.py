@@ -2,8 +2,8 @@ import logging
 import unittest
 from unittest.mock import MagicMock, patch
 from io import StringIO
-from src.display_jira_tickets.reporter import Reporter, ReportConfig
-from src.display_jira_tickets.issue import Issue, Status, Action
+from reporter import Reporter, ReportConfig
+from issue import Issue, Status, Action
 
 
 class TestReporter(unittest.TestCase):

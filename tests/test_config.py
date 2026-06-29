@@ -1,7 +1,7 @@
 import unittest
 import logging
-from src.display_jira_tickets.config import Config
-from src.display_jira_tickets.issue import Status
+from config import Config
+from issue import Status
 
 class TestConfig(unittest.TestCase):
     def _create_config_from_string(self, config_string: str) -> Config:

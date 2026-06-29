@@ -102,15 +102,16 @@ Vous devrez la modifier comme suit (les IDs et noms de statuts sont des exemples
    ```bash
    display-daily-tickets
    ```
-   **Optionnel** : Si vous n'avez pas installé le package et que vous souhaitez l'exécuter depuis les sources, utilisez la commande suivante depuis la racine du projet :
+   **Optionnel** : Si vous n'avez pas installé le package et que vous souhaitez l'exécuter depuis les sources (ou une fois compilé en tant que script autonome), utilisez la commande suivante depuis la racine du projet :
    ```bash
-   python -m src.display_jira_tickets
+   python src/display.py
    ```
+   Vous pouvez également utiliser des outils comme PyInstaller pour compiler `src/display.py` en un exécutable standalone.
 
 ### 5. Lancer les tests
 Pour lancer la suite de tests unitaires, utilisez la commande suivante à la racine du projet :
 ```bash
-python -m unittest discover tests
+PYTHONPATH=src python -m unittest discover tests
 ```
 
 ### 6. Résoudre les éventuels problèmes

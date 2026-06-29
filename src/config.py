@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from .issue import Status
+from issue import Status
 
 
 @dataclass
