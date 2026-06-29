@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
-from src.display_jira_tickets.config_file_initializer import ConfigFileInitializer
+from config_file_initializer import ConfigFileInitializer
 import configparser
 
 class TestConfigFileInitializer(unittest.TestCase):
-    @patch('src.display_jira_tickets.config_file_initializer.JiraClient')
+    @patch('config_file_initializer.JiraClient')
     def test_initialize_status_mapping(self, mock_jira_client_class):
         # Arrange
         mock_jira_client = mock_jira_client_class.return_value

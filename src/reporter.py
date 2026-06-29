@@ -1,7 +1,7 @@
 import logging
 
-from .config import ReportConfig
-from .issue import Issue
+from config import ReportConfig
+from issue import Issue
 
 
 class Reporter:

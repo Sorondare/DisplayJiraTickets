@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from src.display_jira_tickets.issue import (
+from issue import (
     Action,
     Status,
     Issue,
