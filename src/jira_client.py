@@ -1,4 +1,5 @@
 import logging
+import concurrent.futures
 from jira import JIRA
 from config import JiraConfig
 from issue import Issue, map_status, map_action_from_status
@@ -29,20 +30,22 @@ class JiraClient:
         jql_filter_assigned = f'project = "{self.config.project}" AND assignee = "{report_username}" AND resolution = Unresolved AND sprint in openSprints()'
         self.logger.info("Fetching updated issues using JQL: %s", jql_filter_updated)
         try:
-            jira_issues_updated = self.jira.search_issues(
-                jql_filter_updated,
-                maxResults=1000,
-                fields="key,summary,status,assignee,issuetype,comment",
-                expand="changelog"
-            )
-
             self.logger.info("Fetching assigned issues using JQL: %s", jql_filter_assigned)
-            jira_issues_assigned = self.jira.search_issues(
-                jql_filter_assigned,
-                maxResults=1000,
-                fields="key,summary,status,assignee,issuetype,comment",
-                expand="changelog"
-            )
+
+            def fetch(jql):
+                return self.jira.search_issues(
+                    jql,
+                    maxResults=1000,
+                    fields="key,summary,status,assignee,issuetype,comment",
+                    expand="changelog"
+                )
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                future_updated = executor.submit(fetch, jql_filter_updated)
+                future_assigned = executor.submit(fetch, jql_filter_assigned)
+
+                jira_issues_updated = future_updated.result()
+                jira_issues_assigned = future_assigned.result()
 
             issues_dict = {}
             all_jira_issues = list(jira_issues_updated) + list(jira_issues_assigned)
