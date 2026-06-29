@@ -1,18 +1,12 @@
 import argparse
 import logging
 import sys
+from pathlib import Path
 
-try:
-    from .config import Config
-    from .config_file_initializer import ConfigFileInitializer
-    from .jira_client import JiraClient
-    from .reporter import Reporter
-except ImportError:
-    # Fallback to absolute imports if script is executed directly
-    from src.display_jira_tickets.config import Config
-    from src.display_jira_tickets.config_file_initializer import ConfigFileInitializer
-    from src.display_jira_tickets.jira_client import JiraClient
-    from src.display_jira_tickets.reporter import Reporter
+from .config import Config
+from .config_file_initializer import ConfigFileInitializer
+from .jira_client import JiraClient
+from .reporter import Reporter
 
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -25,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        config = Config(args.config)
+        config = Config(Path(args.config))
     except FileNotFoundError:
         logging.error("Configuration file not found at %s", args.config)
         sys.exit(1)
