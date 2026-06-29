@@ -26,7 +26,7 @@ class JiraClient:
 
     def fetch_issues(self, report_username: str) -> list[Issue]:
         jql_filter_updated = f'project = "{self.config.project}" AND updated >= startOfDay() ORDER BY updated ASC'
-        jql_filter_assigned = f'project = "{self.config.project}" AND assignee = "{report_username}" AND resolution = Unresolved'
+        jql_filter_assigned = f'project = "{self.config.project}" AND assignee = "{report_username}" AND resolution = Unresolved AND sprint in openSprints()'
         self.logger.info("Fetching updated issues using JQL: %s", jql_filter_updated)
         try:
             jira_issues_updated = self.jira.search_issues(
