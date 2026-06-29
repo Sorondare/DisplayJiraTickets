@@ -1,7 +1,6 @@
 import logging
-
 from .config import ReportConfig
-from .issue import Issue
+from .issue import Issue, Status
 
 
 class Reporter:
@@ -10,14 +9,8 @@ class Reporter:
         self.logger = logging.getLogger(__name__)
 
     def generate_report(self, issues: list[Issue]):
-        if not issues:
-            self.logger.info("No issues found.")
-            return
-
-        self.logger.info("Found %d issues.", len(issues))
-
         self.logger.info("Generating report...")
-        report_lines = []
+        report_lines = ["Ce jour :"]
         if self.config.introduction:
             report_lines.append(self.config.introduction)
         for issue in issues:
@@ -26,17 +19,14 @@ class Reporter:
                 continue
 
             if not issue.daily_actions:
+                # No actions for today by the user, skip in report
                 continue
 
-            report_lines.append(f"* {issue.issue_key} {issue.summary}")
+            report_lines.append(f"- {issue.issue_key} {issue.summary}")
             for action in issue.daily_actions:
-                report_lines.append(f"  * {action}")
-
-        empty_report_length = 1 if self.config.introduction else 0
-        if len(report_lines) == empty_report_length:
-            report_lines.append("No issues found.")
-            self.logger.info("No issues found.")
+                # Still check if we want to append (en cours) dynamically if it's the current state?
+                # Actually, the user wanted direct phrasing based on history, and no need to append "(en cours)" on the list.
+                report_lines.append(f"  - {action}")
 
         print("\n".join(report_lines))
-
         self.logger.info("Report generation complete.")

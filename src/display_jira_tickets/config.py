@@ -1,7 +1,7 @@
 import configparser
 import logging
 from dataclasses import dataclass
-from pathlib import Path
+
 
 from .issue import Status
 
@@ -27,10 +27,7 @@ class LoggingConfig:
 
 
 class Config:
-    def __init__(self, file_path: Path):
-        if not file_path.exists():
-            raise FileNotFoundError(f"Config file not found at {file_path}")
-
+    def __init__(self, file_path: str):
         config = configparser.ConfigParser()
         config.read(file_path)
 

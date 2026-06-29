@@ -7,8 +7,11 @@ class TestConfig(unittest.TestCase):
     def _create_config_from_string(self, config_string: str) -> Config:
         # Helper method to create a Config object from a string by mocking file access.
         # configparser.read() uses open() internally, so we can mock that.
-        with unittest.mock.patch('builtins.open', unittest.mock.mock_open(read_data=config_string)):
-            return Config('dummy_path')
+        import pathlib
+        dummy_path = pathlib.Path('dummy_path')
+        with unittest.mock.patch.object(pathlib.Path, 'exists', return_value=True):
+            with unittest.mock.patch('builtins.open', unittest.mock.mock_open(read_data=config_string)):
+                return Config(dummy_path)
 
     def test_config_loading_basic(self):
         config_string = """
