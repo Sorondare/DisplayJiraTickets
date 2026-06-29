@@ -56,11 +56,22 @@ class TestJiraClient(unittest.TestCase):
         client.fetch_issues("test_user")
 
         # Assert
-        args, kwargs = mock_jira_instance.search_issues.call_args
-        self.assertIn('fields', kwargs)
-        self.assertEqual(kwargs['fields'], "key,summary,status,assignee,issuetype,comment")
-        self.assertIn('expand', kwargs)
-        self.assertEqual(kwargs['expand'], "changelog")
+        # search_issues should be called twice now:
+        # 1. for updated issues
+        # 2. for assigned issues
+        self.assertEqual(mock_jira_instance.search_issues.call_count, 2)
+
+        args_updated, kwargs_updated = mock_jira_instance.search_issues.call_args_list[0]
+        self.assertIn('fields', kwargs_updated)
+        self.assertEqual(kwargs_updated['fields'], "key,summary,status,assignee,issuetype,comment")
+        self.assertIn('expand', kwargs_updated)
+        self.assertEqual(kwargs_updated['expand'], "changelog")
+
+        args_assigned, kwargs_assigned = mock_jira_instance.search_issues.call_args_list[1]
+        self.assertIn('fields', kwargs_assigned)
+        self.assertEqual(kwargs_assigned['fields'], "key,summary,status,assignee,issuetype,comment")
+        self.assertIn('expand', kwargs_assigned)
+        self.assertEqual(kwargs_assigned['expand'], "changelog")
 
 
 if __name__ == '__main__':

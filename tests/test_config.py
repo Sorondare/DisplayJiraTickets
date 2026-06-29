@@ -1,3 +1,4 @@
+from unittest import mock
 import unittest
 import logging
 from src.display_jira_tickets.config import Config
@@ -10,8 +11,8 @@ class TestConfig(unittest.TestCase):
         import pathlib
         dummy_path = pathlib.Path('dummy_path')
 
-        with unittest.mock.patch.object(pathlib.Path, 'exists', return_value=True):
-            with unittest.mock.patch('builtins.open', unittest.mock.mock_open(read_data=config_string)):
+        with mock.patch.object(pathlib.Path, 'exists', return_value=True):
+            with mock.patch('builtins.open', unittest.mock.mock_open(read_data=config_string)):
                 return Config(dummy_path)
 
     def test_config_loading_basic(self):

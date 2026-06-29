@@ -25,18 +25,31 @@ class JiraClient:
             raise
 
     def fetch_issues(self, report_username: str) -> list[Issue]:
-        jql_filter = f'project = "{self.config.project}" AND updated >= startOfDay() ORDER BY updated ASC'
-        self.logger.info("Fetching issues using JQL: %s", jql_filter)
+        jql_filter_updated = f'project = "{self.config.project}" AND updated >= startOfDay() ORDER BY updated ASC'
+        jql_filter_assigned = f'project = "{self.config.project}" AND assignee = "{report_username}" AND resolution = Unresolved'
+        self.logger.info("Fetching updated issues using JQL: %s", jql_filter_updated)
         try:
-            jira_issues = self.jira.search_issues(
-                jql_filter,
+            jira_issues_updated = self.jira.search_issues(
+                jql_filter_updated,
                 maxResults=1000,
                 fields="key,summary,status,assignee,issuetype,comment",
                 expand="changelog"
             )
 
-            issues = []
-            for jira_issue in jira_issues:
+            self.logger.info("Fetching assigned issues using JQL: %s", jql_filter_assigned)
+            jira_issues_assigned = self.jira.search_issues(
+                jql_filter_assigned,
+                maxResults=1000,
+                fields="key,summary,status,assignee,issuetype,comment",
+                expand="changelog"
+            )
+
+            issues_dict = {}
+            all_jira_issues = list(jira_issues_updated) + list(jira_issues_assigned)
+            for jira_issue in all_jira_issues:
+                if jira_issue.key in issues_dict:
+                    continue
+
                 issue_type = jira_issue.fields.issuetype.name
                 current_status = map_status(jira_issue.fields.status, self.config.status_mapping)
                 assignee = jira_issue.fields.assignee.displayName if jira_issue.fields.assignee else None
@@ -50,10 +63,19 @@ class JiraClient:
                     daily_actions=[]
                 )
                 issue_obj.extract_daily_actions(jira_issue, report_username, self.config.status_mapping)
-                issues.append(issue_obj)
+                issues_dict[issue_obj.issue_key] = issue_obj
+
+            issues = list(issues_dict.values())
 
             for issue in issues:
-                self.logger.debug("Extracted issue: %s", issue)
+                if not issue.daily_actions and issue.status not in self.config.static_ticket_filtering and issue.assignee == report_username:
+                    # Tâche qui n'a pas bougé et qui n'est pas dans les statuts filtrés
+                    action = map_action_from_status(issue.issue_type, issue.status)
+                    issue.daily_actions.append(str(action))
+
+            if self.logger.isEnabledFor(logging.DEBUG):
+                for issue in issues:
+                    self.logger.debug("Extracted issue: %s", issue)
 
             self.logger.info("Found %d issues.", len(issues))
             return issues

@@ -3,6 +3,10 @@ server = <host url>
 username = <username>
 api_token = <api token>
 project_key = <project key>
+# List of internal statuses to filter out when displaying static assigned tickets
+# (tickets assigned to the user that didn't move today).
+# Available internal statuses: TO_DO, IN_PROGRESS, TO_REVIEW, IN_REVIEW, TO_DEPLOY, TO_TEST, IN_TEST, DONE
+static_ticket_filtering = TO_DO, DONE
 
 [Report]
 username = <jira username used in issues>
