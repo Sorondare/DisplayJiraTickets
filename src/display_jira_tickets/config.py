@@ -1,7 +1,7 @@
 import configparser
 import logging
 from dataclasses import dataclass
-
+from pathlib import Path
 
 from .issue import Status
 
@@ -11,7 +11,6 @@ class JiraConfig:
     server: str
     username: str
     api_token: str
-    jql_filter: str
     project: str
     status_mapping: dict[str, Status]
 
@@ -28,7 +27,10 @@ class LoggingConfig:
 
 
 class Config:
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: Path):
+        if not file_path.exists():
+            raise FileNotFoundError(f"Config file not found at {file_path}")
+
         config = configparser.ConfigParser()
         config.read(file_path)
 
@@ -42,7 +44,6 @@ class Config:
             server=config.get('Jira', 'server'),
             username=config.get('Jira', 'username'),
             api_token=config.get('Jira', 'api_token'),
-            jql_filter=config.get('Jira', 'jql_filter'),
             project=config.get('Jira', 'project_key'),
             status_mapping=status_mapping,
         )

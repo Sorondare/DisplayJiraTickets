@@ -53,12 +53,14 @@ class TestJiraClient(unittest.TestCase):
         client = JiraClient(mock_config)
 
         # Act
-        client.fetch_issues()
+        client.fetch_issues("test_user")
 
         # Assert
         args, kwargs = mock_jira_instance.search_issues.call_args
         self.assertIn('fields', kwargs)
-        self.assertEqual(kwargs['fields'], "key,summary,status,assignee,issuetype")
+        self.assertEqual(kwargs['fields'], "key,summary,status,assignee,issuetype,comment")
+        self.assertIn('expand', kwargs)
+        self.assertEqual(kwargs['expand'], "changelog")
 
 
 if __name__ == '__main__':

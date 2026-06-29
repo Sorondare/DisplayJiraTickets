@@ -1,6 +1,8 @@
 import argparse
 import logging
 import sys
+from pathlib import Path
+
 from .config import Config
 from .config_file_initializer import ConfigFileInitializer
 from .jira_client import JiraClient
@@ -17,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        config = Config(args.config)
+        config = Config(Path(args.config))
     except FileNotFoundError:
         logging.error("Configuration file not found at %s", args.config)
         sys.exit(1)
@@ -37,7 +39,7 @@ def main():
             logging.info("Configuration file initialized successfully.")
             sys.exit(0)
 
-        issues = jira_client.fetch_issues()
+        issues = jira_client.fetch_issues(config.report_config.username)
 
         reporter = Reporter(config.report_config)
         reporter.generate_report(issues)
