@@ -4,7 +4,7 @@ Ce fichier définit le cadre technique, les conventions et les règles de concep
 
 ## 1. Type de technologie
 
-*   **Langage :** Python 3.11 minimum (compatible 3.12).
+*   **Langage :** Python 3.12 minimum.
 *   **Système de build / Packaging :** `setuptools` (défini dans `pyproject.toml`).
 *   **Dépendances principales :**
     *   `jira` (API client Jira).
