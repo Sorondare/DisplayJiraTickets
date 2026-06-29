@@ -4,8 +4,7 @@ import logging
 import sys
 from pathlib import Path
 
-from config import Config
-from config_file_initializer import ConfigFileInitializer
+from config import Config, ConfigFileInitializer
 from jira_client import JiraClient
 from reporter import Reporter
 

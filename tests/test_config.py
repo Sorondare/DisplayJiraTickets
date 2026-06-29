@@ -1,7 +1,9 @@
 from unittest import mock
 import unittest
 import logging
-from config import Config
+import configparser
+from unittest.mock import MagicMock, patch, mock_open
+from config import Config, ConfigFileInitializer
 from issue import Status
 
 class TestConfig(unittest.TestCase):
@@ -98,6 +100,40 @@ Backlog = INVALID_STATUS
         with self.assertRaises(ValueError) as cm:
             self._create_config_from_string(config_string)
         self.assertIn("Invalid status value 'INVALID_STATUS'", str(cm.exception))
+
+
+class TestConfigFileInitializer(unittest.TestCase):
+    def test_initialize_status_mapping(self):
+        # Arrange
+        mock_jira_client = MagicMock()
+
+        status1 = MagicMock()
+        status1.id = '1'
+        status1.name = 'To Do'
+
+        status2 = MagicMock()
+        status2.id = '3'
+        status2.name = 'In Progress'
+
+        mock_jira_client.fetch_jira_statuses.return_value = [status1, status2]
+
+        with patch('builtins.open', mock_open(read_data='')) as mock_file:
+            initializer = ConfigFileInitializer('dummy_path')
+
+            # Act
+            initializer.initialize_status_mapping(mock_jira_client, 'Test Project')
+
+            # Assert
+            mock_file.assert_called_with('dummy_path', 'w')
+
+            written_config = "".join(call.args[0] for call in mock_file().write.call_args_list)
+
+            config = configparser.ConfigParser()
+            config.read_string(written_config)
+
+            self.assertTrue(config.has_section('StatusMapping'))
+            self.assertEqual(config.get('StatusMapping', '1').upper(), 'TO_DO')
+            self.assertEqual(config.get('StatusMapping', '3').upper(), 'TO_DO')
 
 
 if __name__ == '__main__':
