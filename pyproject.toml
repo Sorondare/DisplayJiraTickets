@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "DisplayJiraTickets"
@@ -16,7 +16,7 @@ license = { file="LICENSE" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved ::  GPL-3.0 license",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Topic :: Utilities",
 ]
@@ -32,6 +32,8 @@ Repository = "https://github.com/Sorondare/DisplayJiraTickets"
 [project.scripts]
 display-daily-tickets = "display:main"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-py-modules = ["display", "config", "config_file_initializer", "issue", "jira_client", "reporter"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/display.py", "src/config.py", "src/config_file_initializer.py", "src/issue.py", "src/jira_client.py", "src/reporter.py"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
