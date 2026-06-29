@@ -13,6 +13,7 @@ class JiraConfig:
     api_token: str
     project: str
     status_mapping: dict[str, Status]
+    static_ticket_filtering: set[Status]
 
 
 @dataclass
@@ -40,12 +41,16 @@ class Config:
 
     def _get_jira_config(self, config: configparser.ConfigParser) -> JiraConfig:
         status_mapping = self._get_status_mapping(config)
+        static_ticket_filtering_str = config.get('Jira', 'static_ticket_filtering', fallback='TO_DO, DONE')
+        static_ticket_filtering = {Status[s.strip().upper()] for s in static_ticket_filtering_str.split(',') if s.strip()}
+
         return JiraConfig(
             server=config.get('Jira', 'server'),
             username=config.get('Jira', 'username'),
             api_token=config.get('Jira', 'api_token'),
             project=config.get('Jira', 'project_key'),
             status_mapping=status_mapping,
+            static_ticket_filtering=static_ticket_filtering,
         )
 
     @staticmethod
