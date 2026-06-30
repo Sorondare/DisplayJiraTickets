@@ -51,6 +51,8 @@ class Issue:
     status: Status
     assignee: str | None
     daily_actions: list[str]
+    status_category_key: str = ""
+    is_in_progress: bool = False
 
     def is_valid(self):
         return self.issue_key is not None and self.summary is not None and self.status is not None
