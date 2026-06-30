@@ -12,7 +12,7 @@ class Action(StrEnum):
     TO_TEST = 'Soumission pour test'
     TEST = 'Test'
     DONE = 'Terminé'
-    DISCUSSION = 'Discussion'
+    DISCUSSION = 'Échange sur le ticket'
     DESCRIPTION_UPDATE = 'Modification de la description'
     EMPTY = ''
 
