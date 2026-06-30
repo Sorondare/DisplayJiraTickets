@@ -37,3 +37,12 @@ packages = ["src/display.py", "src/config.py", "src/config_file_initializer.py",
 
 [tool.hatch.build.targets.wheel.sources]
 "src" = ""
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.21.0",
+    "ruff>=0.15.20",
+]
+
+[tool.ruff]
+line-length = 150

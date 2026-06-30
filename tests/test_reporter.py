@@ -1,6 +1,6 @@
 import logging
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from io import StringIO
 from reporter import Reporter, ReportConfig
 from issue import Issue, Status, Action
