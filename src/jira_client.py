@@ -56,6 +56,8 @@ class JiraClient:
                 issue_type = jira_issue.fields.issuetype.name
                 current_status = map_status(jira_issue.fields.status, self.config.status_mapping)
                 assignee = jira_issue.fields.assignee.displayName if jira_issue.fields.assignee else None
+                status_category_key = jira_issue.fields.status.statusCategory.key
+                is_in_progress = (assignee == report_username and status_category_key != 'done')
 
                 issue_obj = Issue(
                     issue_key=jira_issue.key,
@@ -63,7 +65,9 @@ class JiraClient:
                     summary=jira_issue.fields.summary,
                     status=current_status,
                     assignee=assignee,
-                    daily_actions=[]
+                    daily_actions=[],
+                    status_category_key=status_category_key,
+                    is_in_progress=is_in_progress
                 )
                 issue_obj.extract_daily_actions(jira_issue, report_username, self.config.status_mapping)
                 issues_dict[issue_obj.issue_key] = issue_obj
@@ -71,8 +75,7 @@ class JiraClient:
             issues = list(issues_dict.values())
 
             for issue in issues:
-                if not issue.daily_actions and issue.status not in self.config.static_ticket_filtering and issue.assignee == report_username:
-                    # Tâche qui n'a pas bougé et qui n'est pas dans les statuts filtrés
+                if not issue.daily_actions and issue.status_category_key == 'indeterminate' and issue.assignee == report_username:
                     action = map_action_from_status(issue.issue_type, issue.status)
                     issue.daily_actions.append(str(action))
 

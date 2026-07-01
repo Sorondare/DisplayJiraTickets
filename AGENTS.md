@@ -25,6 +25,7 @@ Ce fichier définit le cadre technique, les conventions et les règles de concep
 *   **Concaténation :** Préférer les `f-strings` pour la concaténation de chaînes afin d'améliorer la lisibilité et les performances.
 *   **Recherche de membres (`in`) :** Utiliser des `sets` (ensembles) constants au niveau du module (ex: `IN_PROGRESS_STATUSES`) pour les vérifications d'appartenance à l'intérieur des boucles, garantissant un temps de recherche en O(1).
 *   **Logging :** Toujours envelopper les boucles ou traitements lourds utilisés uniquement pour le log de débogage dans une condition `if logger.isEnabledFor(logging.DEBUG):` pour éviter les coûts d'exécution (traversées O(N), allocations) lorsque le niveau de log est supérieur à DEBUG.
+*   **Commentaires :** Éviter les commentaires inutiles dans le code. Préférer utiliser un nommage explicite pour les variables et les fonctions. Si un commentaire est réellement nécessaire pour expliquer un choix technique complexe, il doit être rédigé **en anglais uniquement**.
 
 ## 3. Conventions de Test
 

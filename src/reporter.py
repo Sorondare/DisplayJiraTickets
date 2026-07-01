@@ -28,6 +28,9 @@ class Reporter:
             if not issue.daily_actions:
                 continue
 
+            if issue.is_in_progress:
+                issue.daily_actions[-1] += " (en cours)"
+
             report_lines.append(f"* {issue.issue_key} {issue.summary}")
             for action in issue.daily_actions:
                 report_lines.append(f"  * {action}")
