@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import Mock
 from issue import (
     Action,
@@ -91,6 +92,72 @@ class TestIssue(unittest.TestCase):
         self.assertTrue(bug_issue.is_bug())
         story_issue = Issue("KEY-1", "Story", "Summary", Status.TO_DO, "User", [])
         self.assertFalse(story_issue.is_bug())
+
+
+class TestExtractDailyActions(unittest.TestCase):
+    USERNAME = "User"
+
+    def setUp(self):
+        self.base_time = datetime.now().astimezone().replace(
+            hour=8, minute=0, second=0, microsecond=0
+        )
+
+    def _timestamp(self, minutes):
+        return (self.base_time + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+
+    def _status_history(self, minutes, to_name, to_id):
+        history = Mock()
+        history.created = self._timestamp(minutes)
+        history.author = Mock()
+        history.author.displayName = self.USERNAME
+        item = Mock()
+        item.field = 'status'
+        item.toString = to_name
+        item.to = to_id
+        history.items = [item]
+        return history
+
+    def _comment(self, minutes):
+        comment = Mock(spec=['created', 'updated', 'author'])
+        comment.created = self._timestamp(minutes)
+        comment.updated = comment.created
+        comment.author = Mock()
+        comment.author.displayName = self.USERNAME
+        return comment
+
+    def _jira_issue(self, histories, comments):
+        jira_issue = Mock()
+        jira_issue.changelog.histories = histories
+        jira_issue.fields.comment.comments = comments
+        return jira_issue
+
+    def test_action_redone_later_reappears_in_order(self):
+        issue = Issue("KEY-1", "Story", "Summary", Status.IN_PROGRESS, self.USERNAME, [])
+        jira_issue = self._jira_issue(
+            histories=[
+                self._status_history(0, "In Progress", "3"),
+                self._status_history(60, "Code Review", "1001"),
+                self._status_history(120, "In Progress", "3"),
+            ],
+            comments=[],
+        )
+        issue.extract_daily_actions(jira_issue, self.USERNAME, {"1001": Status.IN_REVIEW})
+        self.assertEqual(
+            issue.daily_actions,
+            [str(Action.IMPLEMENTATION), str(Action.REVIEW), str(Action.IMPLEMENTATION)],
+        )
+
+    def test_consecutive_duplicates_are_collapsed(self):
+        issue = Issue("KEY-1", "Story", "Summary", Status.IN_PROGRESS, self.USERNAME, [])
+        jira_issue = self._jira_issue(
+            histories=[self._status_history(0, "In Progress", "3")],
+            comments=[self._comment(30), self._comment(45), self._comment(50)],
+        )
+        issue.extract_daily_actions(jira_issue, self.USERNAME, {})
+        self.assertEqual(
+            issue.daily_actions,
+            [str(Action.IMPLEMENTATION), str(Action.DISCUSSION)],
+        )
 
 
 if __name__ == '__main__':

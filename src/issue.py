@@ -149,12 +149,11 @@ class Issue:
         # Sort events chronologically
         events.sort(key=lambda x: x[0])
 
-        # Deduplicate actions while preserving order
-        seen_actions = set()
+        # Collapse only consecutive duplicates so an action redone later
+        # in the day reappears at its chronological position
         daily_actions = []
         for _, action_str in events:
-            if action_str and action_str not in seen_actions and action_str != Action.EMPTY:
-                seen_actions.add(action_str)
+            if action_str and action_str != Action.EMPTY and (not daily_actions or daily_actions[-1] != action_str):
                 daily_actions.append(action_str)
 
         self.daily_actions = daily_actions
