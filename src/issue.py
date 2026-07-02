@@ -4,7 +4,7 @@ from typing import Any
 
 
 class Action(StrEnum):
-    TO_DO = 'Remise à faire'
+    TO_DO = 'Remise en attente'
     IMPLEMENTATION = 'Implémentation'
     FIX = 'Correction'
     TO_REVIEW = 'Soumission pour revue'
