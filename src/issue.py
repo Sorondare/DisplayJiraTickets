@@ -40,6 +40,20 @@ ACTION_MAPPING = {
 }
 
 
+def is_author(comment: Any, report_username: str) -> bool:
+    author = comment.author.displayName if hasattr(comment, 'author') and hasattr(comment.author,
+                                                                                  'displayName') else None
+    author_matches = False
+    if author == report_username:
+        author_matches = True
+    elif hasattr(comment, 'author') and hasattr(comment.author, 'name') and comment.author.name == report_username:
+        author_matches = True
+    elif hasattr(comment, 'author') and hasattr(comment.author,
+                                                'emailAddress') and report_username in comment.author.emailAddress:
+        author_matches = True
+    return author_matches
+
+
 @dataclass
 class Issue:
     """
@@ -76,15 +90,7 @@ class Issue:
                     continue
 
                 # Check author
-                author = history.author.displayName if hasattr(history, 'author') and hasattr(history.author, 'displayName') else None
-                # Fallback to name or emailAddress if displayName doesn't match perfectly, but we'll try matching displayName first
-                author_matches = False
-                if author == report_username:
-                    author_matches = True
-                elif hasattr(history, 'author') and hasattr(history.author, 'name') and history.author.name == report_username:
-                    author_matches = True
-                elif hasattr(history, 'author') and hasattr(history.author, 'emailAddress') and report_username in history.author.emailAddress:
-                    author_matches = True
+                author_matches = is_author(history, report_username)
 
                 if not author_matches:
                     continue
@@ -118,14 +124,7 @@ class Issue:
                 # Check for comment creation
                 comment_created = datetime.strptime(comment.created, "%Y-%m-%dT%H:%M:%S.%f%z")
                 if comment_created >= start_of_day:
-                    author = comment.author.displayName if hasattr(comment, 'author') and hasattr(comment.author, 'displayName') else None
-                    author_matches = False
-                    if author == report_username:
-                        author_matches = True
-                    elif hasattr(comment, 'author') and hasattr(comment.author, 'name') and comment.author.name == report_username:
-                        author_matches = True
-                    elif hasattr(comment, 'author') and hasattr(comment.author, 'emailAddress') and report_username in comment.author.emailAddress:
-                        author_matches = True
+                    author_matches = is_author(comment, report_username)
 
                     if author_matches:
                         events.append((comment_created, str(Action.DISCUSSION)))
@@ -164,7 +163,7 @@ def map_status(jira_status: Any, custom_mapping: dict[str, Status]) -> Status:
     if jira_status.id in custom_mapping:
         return custom_mapping[jira_status.id]
 
-    jira_status_name = jira_status.name.lower() if jira_status.name else None
+    jira_status_name = str(jira_status.name).lower() if jira_status.name else None
     if jira_status_name is not None and jira_status_name in custom_mapping:
         return custom_mapping[jira_status_name]
 
