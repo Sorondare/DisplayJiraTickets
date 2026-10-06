@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "DisplayJiraTickets"
-version = "1.0.1"
+version = "1.0.3"
 authors = [
     { name="Sorondare" },
 ]
